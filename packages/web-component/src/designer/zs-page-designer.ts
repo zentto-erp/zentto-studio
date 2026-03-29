@@ -647,21 +647,47 @@ export class ZsPageDesigner extends LitElement {
     return clone;
   }
 
-  /** When a datagrid auto-generates columns, persist them in the schema */
+  /** When a datagrid emits config (auto-columns or configurator changes), persist in schema */
   private handleGridConfigChange = (e: Event) => {
     const detail = (e as CustomEvent).detail;
-    if (!detail?.columns || !this.schema) return;
+    if (!this.schema) return;
 
-    // Find the datagrid field that emitted this
+    // Find the target datagrid field
+    const fieldId = detail?.fieldId;
     for (const section of this.schema.sections) {
       for (const field of section.fields) {
-        if (field.type === 'datagrid') {
-          // Only update if this field has no columns yet
+        if (field.type === 'datagrid' && (!fieldId || field.id === fieldId)) {
           if (!field.props) field.props = {};
-          if (!field.props.columns || (field.props.columns as unknown[]).length === 0) {
+
+          // Persist columns
+          if (detail.columns) {
             field.props.columns = detail.columns;
-            this.commitChange();
           }
+
+          // Persist full layout snapshot (density, sorts, widths, visibility, features, etc)
+          if (detail.layout) {
+            field.props.gridLayout = detail.layout;
+            // Also promote key settings to top-level props for easy access
+            if (detail.layout.density) field.props.density = detail.layout.density;
+            if (detail.layout.pageSize) field.props.pageSize = detail.layout.pageSize;
+            if (detail.layout.columnWidths) field.props.columnWidths = detail.layout.columnWidths;
+            if (detail.layout.columnVisibility) field.props.columnVisibility = detail.layout.columnVisibility;
+            if (detail.layout.sorts) field.props.sorts = detail.layout.sorts;
+            if (detail.layout.features) {
+              // Map feature flags to props
+              const f = detail.layout.features;
+              if (f.enableToolbar !== undefined) field.props.enableToolbar = f.enableToolbar;
+              if (f.enableSearch !== undefined) field.props.enableSearch = f.enableSearch;
+              if (f.enableExport !== undefined) field.props.enableExport = f.enableExport;
+              if (f.enablePagination !== undefined) field.props.enablePagination = f.enablePagination;
+              if (f.enableHeaderFilters !== undefined) field.props.enableHeaderFilters = f.enableHeaderFilters;
+              if (f.showTotals !== undefined) field.props.showTotals = f.showTotals;
+              if (f.enableClipboard !== undefined) field.props.enableClipboard = f.enableClipboard;
+              if (f.enableRowSelection !== undefined) field.props.enableRowSelection = f.enableRowSelection;
+            }
+          }
+
+          this.commitChange();
           return;
         }
       }

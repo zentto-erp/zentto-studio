@@ -215,7 +215,7 @@ export class ZsFieldDatagrid extends LitElement {
 
           // Emit columns back so the designer can persist them in the schema
           this.dispatchEvent(new CustomEvent('grid-config-change', {
-            detail: { columns: this.autoColumns },
+            detail: { columns: this.autoColumns, source: 'auto-detect' },
             bubbles: true, composed: true,
           }));
         }
@@ -243,6 +243,22 @@ export class ZsFieldDatagrid extends LitElement {
   }
 
   // ─── Event Handling ──────────────────────────────────────────
+
+  /** Capture full grid layout snapshot and re-emit for designer persistence */
+  private handleLayoutPersist(e: Event) {
+    const detail = (e as CustomEvent).detail;
+    if (!detail) return;
+    this.dispatchEvent(new CustomEvent('grid-config-change', {
+      detail: {
+        source: 'configurator',
+        fieldId: this.config?.id,
+        columns: detail.columns,
+        layout: detail.layout,
+        gridId: detail.gridId,
+      },
+      bubbles: true, composed: true,
+    }));
+  }
 
   private handleRowClick(e: Event) {
     const detail = (e as CustomEvent).detail;
@@ -308,6 +324,7 @@ export class ZsFieldDatagrid extends LitElement {
           enable-configurator
           @row-click="${this.handleRowClick}"
           @selection-change="${this.handleSelectionChange}"
+          @layout-persist="${this.handleLayoutPersist}"
         ></zentto-grid>
       </div>
     `;
