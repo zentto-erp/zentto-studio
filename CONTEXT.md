@@ -172,6 +172,7 @@ rm -rf apps/lab/.next node_modules/.cache
 ## Lo que falta (Fase 2) — PRIORIDAD
 
 ### ALTA PRIORIDAD
+0. **Wizard: cada página debe configurar su propia API/data source** — Actualmente el wizard solo tiene una fuente de datos global. Cada página (especialmente datagrid, chart, form) necesita poder definir: endpoint, método, dataSourceId, headers. Sin esto las apps generadas no tienen datos por página. El paso "Páginas" del wizard debe tener un sub-formulario de data source por cada página de tipo grid/chart/form.
 1. **Props completas por tipo de campo en el designer** — Cuando seleccionas un datagrid/chart/report en el canvas, el panel de propiedades debe mostrar TODAS las opciones configurables de ese componente:
    - **DataGrid**: columns (add/remove/reorder), enableToolbar, enableSearch, enableExport, enablePagination, pageSize, height, density, enableHeaderFilters, onRowClick, rowClickSegment, endpoint, dataSourceId
    - **Chart**: chartType (bar/line/pie/donut/area), dataSourceId, labelField, valueFields, colors, height, width, title, showLegend
