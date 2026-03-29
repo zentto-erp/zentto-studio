@@ -1,6 +1,6 @@
 {
   "name": "@zentto/studio",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "Zentto Studio — runtime UI builder web components. Renders dynamic forms, dashboards, and wizards from JSON schemas.",
   "type": "module",
   "main": "dist/zentto-studio-renderer.js",

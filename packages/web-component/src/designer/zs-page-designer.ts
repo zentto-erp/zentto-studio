@@ -558,6 +558,11 @@ export class ZsPageDesigner extends LitElement {
   @property({ type: Number, attribute: 'auto-save-ms' }) autoSaveMs = 1000;
   @property({ type: Number, attribute: 'grid-snap' }) gridSnap = 1;
 
+  /** API base URL for save/load (e.g. "http://localhost:4000") */
+  @property({ type: String, attribute: 'save-api-url' }) saveApiUrl = '';
+  /** Auth token for save/load API */
+  @property({ type: String, attribute: 'save-api-token' }) saveApiToken = '';
+
   // ─── State ────────────────────────────────────────
 
   @state() private selectedFieldId: string | null = null;
@@ -567,6 +572,18 @@ export class ZsPageDesigner extends LitElement {
   @state() private editingTitle = false;
   @state() private collapsedSections = new Set<string>();
   @state() private zoom = 1;
+
+  // Save/Load state
+  @state() private saveDialogOpen = false;
+  @state() private loadDialogOpen = false;
+  @state() private serverAddons: { id: string; title: string; icon: string; modules: string[]; createdAt: string; config: unknown }[] = [];
+  @state() private serverLoading = false;
+  @state() private serverSaving = false;
+  @state() private editingAddonId: string | null = null;
+  @state() private saveName = '';
+  @state() private saveDesc = '';
+  @state() private saveIconEmoji = '📋';
+  @state() private saveModules: string[] = ['global'];
 
   // Undo/Redo
   private undoStack: string[] = [];
@@ -1145,6 +1162,186 @@ export class ZsPageDesigner extends LitElement {
         <div class="panel-resize"></div>
         ${this.renderRightPanel()}
       </div>
+      ${this.saveDialogOpen ? this.renderSaveDialog() : nothing}
+      ${this.loadDialogOpen ? this.renderLoadDialog() : nothing}
+    `;
+  }
+
+  // ─── Save/Load Server Methods ─────────────────────
+
+  private getApiHeaders(): Record<string, string> {
+    const h: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (this.saveApiToken) h['Authorization'] = `Bearer ${this.saveApiToken}`;
+    else if (this.apiToken) h['Authorization'] = `Bearer ${this.apiToken}`;
+    return h;
+  }
+
+  private getApiBase(): string {
+    return (this.saveApiUrl || this.apiBaseUrl || '').replace(/\/+$/, '');
+  }
+
+  private openSaveDialog() {
+    if (!this.schema) return;
+    this.saveName = this.saveName || this.schema.title || '';
+    this.saveDialogOpen = true;
+  }
+
+  private async openLoadDialog() {
+    this.loadDialogOpen = true;
+    this.serverLoading = true;
+    try {
+      const base = this.getApiBase();
+      const res = await fetch(`${base}/v1/studio/addons`, { headers: this.getApiHeaders() });
+      const json = await res.json();
+      this.serverAddons = (json.data ?? []).map((r: any) => ({
+        id: r.AddonId ?? r.id, title: r.Title ?? r.title, icon: r.Icon ?? r.icon ?? '📋',
+        modules: r.modules ?? [], createdAt: r.CreatedAt ?? r.createdAt ?? '',
+        config: r.config ?? (r.Config ? JSON.parse(r.Config) : {}),
+      }));
+    } catch { this.serverAddons = []; }
+    this.serverLoading = false;
+  }
+
+  private async saveToServer() {
+    if (!this.schema || !this.saveName.trim()) return;
+    this.serverSaving = true;
+    const base = this.getApiBase();
+    const body = JSON.stringify({
+      title: this.saveName.trim(), description: this.saveDesc.trim(),
+      icon: this.saveIconEmoji || '📋', modules: this.saveModules,
+      config: { type: 'schema', schema: this.schema },
+    });
+    try {
+      if (this.editingAddonId) {
+        await fetch(`${base}/v1/studio/addons/${this.editingAddonId}`, { method: 'PUT', headers: this.getApiHeaders(), body });
+      } else {
+        const res = await fetch(`${base}/v1/studio/addons`, { method: 'POST', headers: this.getApiHeaders(), body });
+        const json = await res.json();
+        if (json.data?.addonId) this.editingAddonId = json.data.addonId;
+      }
+      this.saveDialogOpen = false;
+    } catch (err) { console.error('[designer] save error:', err); }
+    this.serverSaving = false;
+  }
+
+  private loadFromServer(addon: any) {
+    if (!this.schema) return;
+    const config = addon.config;
+    const s = config?.schema ?? config;
+    this.schema = s;
+    this.undoStack = [JSON.stringify(s)];
+    this.redoStack = [];
+    this.selectedFieldId = null;
+    this.editingAddonId = addon.id;
+    this.saveName = addon.title;
+    this.loadDialogOpen = false;
+    this.emitChange();
+  }
+
+  private async deleteFromServer(id: string) {
+    const base = this.getApiBase();
+    try { await fetch(`${base}/v1/studio/addons/${id}`, { method: 'DELETE', headers: this.getApiHeaders() }); } catch {}
+    this.serverAddons = this.serverAddons.filter(a => a.id !== id);
+  }
+
+  // ─── Dialog Styles (inline, no shadow DOM issues) ─
+
+  private dialogOverlay = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;';
+  private dialogBox = 'background:white;border-radius:12px;width:480px;max-width:90vw;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.3);';
+  private dialogHeader = 'padding:16px 20px;border-bottom:1px solid #eee;font-size:16px;font-weight:600;color:#333;display:flex;justify-content:space-between;align-items:center;';
+  private dialogBody = 'padding:16px 20px;overflow-y:auto;flex:1;';
+  private dialogFooter = 'padding:12px 20px;border-top:1px solid #eee;display:flex;gap:8px;justify-content:flex-end;';
+  private inputStyle = 'width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;font-family:inherit;box-sizing:border-box;';
+  private btnPrimary = 'padding:8px 20px;border:none;border-radius:6px;background:#1976d2;color:white;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;';
+  private btnSecondary = 'padding:8px 20px;border:1px solid #ddd;border-radius:6px;background:white;cursor:pointer;font-size:13px;font-family:inherit;';
+
+  private renderSaveDialog(): TemplateResult {
+    const MODS = [
+      { v: 'global', l: 'Global' }, { v: 'compras', l: 'Compras' }, { v: 'ventas', l: 'Ventas' },
+      { v: 'inventario', l: 'Inventario' }, { v: 'contabilidad', l: 'Contabilidad' },
+      { v: 'nomina', l: 'Nómina' }, { v: 'bancos', l: 'Bancos' }, { v: 'crm', l: 'CRM' },
+    ];
+    return html`
+      <div style="${this.dialogOverlay}" @click="${(e: Event) => { if (e.target === e.currentTarget) this.saveDialogOpen = false; }}">
+        <div style="${this.dialogBox}" @click="${(e: Event) => e.stopPropagation()}">
+          <div style="${this.dialogHeader}">
+            <span>${this.editingAddonId ? '💾 Actualizar' : '💾 Guardar'} en servidor</span>
+            <button style="border:none;background:none;font-size:18px;cursor:pointer;color:#999;" @click="${() => { this.saveDialogOpen = false; }}">✕</button>
+          </div>
+          <div style="${this.dialogBody}">
+            <div style="margin-bottom:12px;">
+              <label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:4px;">Nombre *</label>
+              <input style="${this.inputStyle}" .value="${this.saveName}" @input="${(e: Event) => { this.saveName = (e.target as HTMLInputElement).value; }}" placeholder="Mi formulario" />
+            </div>
+            <div style="margin-bottom:12px;">
+              <label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:4px;">Descripcion</label>
+              <textarea style="${this.inputStyle}resize:vertical;min-height:50px;" .value="${this.saveDesc}" @input="${(e: Event) => { this.saveDesc = (e.target as HTMLTextAreaElement).value; }}"></textarea>
+            </div>
+            <div style="display:flex;gap:12px;margin-bottom:12px;">
+              <div>
+                <label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:4px;">Icono</label>
+                <input style="${this.inputStyle}width:60px;font-size:20px;text-align:center;" .value="${this.saveIconEmoji}" maxlength="4" @input="${(e: Event) => { this.saveIconEmoji = (e.target as HTMLInputElement).value; }}" />
+              </div>
+            </div>
+            <div>
+              <label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:6px;">Modulos donde aparece</label>
+              <div style="display:flex;flex-wrap:wrap;gap:6px;">
+                ${MODS.map(m => {
+                  const active = this.saveModules.includes(m.v);
+                  return html`<button style="padding:4px 10px;border:1px solid ${active ? '#1976d2' : '#ddd'};border-radius:14px;background:${active ? '#e3f2fd' : 'white'};color:${active ? '#1976d2' : '#666'};cursor:pointer;font-size:11px;font-family:inherit;font-weight:${active ? '600' : '400'};"
+                    @click="${() => { this.saveModules = active ? this.saveModules.filter(x => x !== m.v) : [...this.saveModules, m.v]; this.requestUpdate(); }}"
+                  >${m.l}</button>`;
+                })}
+              </div>
+            </div>
+          </div>
+          <div style="${this.dialogFooter}">
+            <button style="${this.btnSecondary}" @click="${() => { this.saveDialogOpen = false; }}">Cancelar</button>
+            <button style="${this.btnPrimary}${!this.saveName.trim() || this.serverSaving ? 'opacity:0.5;pointer-events:none;' : ''}" @click="${this.saveToServer}">
+              ${this.serverSaving ? '⏳ Guardando...' : this.editingAddonId ? '💾 Actualizar' : '💾 Guardar'}
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  private renderLoadDialog(): TemplateResult {
+    return html`
+      <div style="${this.dialogOverlay}" @click="${(e: Event) => { if (e.target === e.currentTarget) this.loadDialogOpen = false; }}">
+        <div style="${this.dialogBox}max-height:70vh;" @click="${(e: Event) => e.stopPropagation()}">
+          <div style="${this.dialogHeader}">
+            <span>📂 Cargar desde servidor</span>
+            <button style="border:none;background:none;font-size:18px;cursor:pointer;color:#999;" @click="${() => { this.loadDialogOpen = false; }}">✕</button>
+          </div>
+          <div style="${this.dialogBody}">
+            ${this.serverLoading
+              ? html`<div style="text-align:center;padding:30px;color:#999;">⏳ Cargando...</div>`
+              : this.serverAddons.length === 0
+                ? html`<div style="text-align:center;padding:30px;color:#999;">No hay schemas guardados en el servidor.</div>`
+                : this.serverAddons.map(a => html`
+                    <div style="display:flex;align-items:center;gap:10px;padding:10px 8px;border-bottom:1px solid #f0f0f0;cursor:pointer;border-radius:6px;transition:background 0.1s;"
+                      @mouseover="${(e: Event) => { (e.currentTarget as HTMLElement).style.background = '#f5f5f5'; }}"
+                      @mouseout="${(e: Event) => { (e.currentTarget as HTMLElement).style.background = ''; }}"
+                      @click="${() => this.loadFromServer(a)}"
+                    >
+                      <span style="font-size:22px;">${a.icon}</span>
+                      <div style="flex:1;min-width:0;">
+                        <div style="font-size:13px;font-weight:600;color:#333;">${a.title}</div>
+                        <div style="font-size:10px;color:#999;">${a.modules.join(', ')} — ${a.createdAt ? new Date(a.createdAt).toLocaleDateString() : ''}</div>
+                      </div>
+                      <button style="border:none;background:none;cursor:pointer;color:#d32f2f;font-size:14px;padding:4px;" title="Eliminar"
+                        @click="${(e: Event) => { e.stopPropagation(); this.deleteFromServer(a.id); }}"
+                      >🗑</button>
+                    </div>
+                  `)
+            }
+          </div>
+          <div style="${this.dialogFooter}">
+            <button style="${this.btnSecondary}" @click="${() => { this.loadDialogOpen = false; }}">Cerrar</button>
+          </div>
+        </div>
+      </div>
     `;
   }
 
@@ -1193,6 +1390,8 @@ export class ZsPageDesigner extends LitElement {
 
         <span class="tb-spacer"></span>
 
+        <button class="tb-btn" style="color:#2e7d32;font-weight:600;" @click="${this.openSaveDialog}" title="Guardar en servidor">💾 Guardar</button>
+        <button class="tb-btn" @click="${this.openLoadDialog}" title="Cargar desde servidor">📂 Cargar</button>
         <button class="tb-btn" @click="${() => {
           if (this.schema) { navigator.clipboard.writeText(JSON.stringify(this.schema, null, 2)); }
         }}">📋 Copiar</button>
