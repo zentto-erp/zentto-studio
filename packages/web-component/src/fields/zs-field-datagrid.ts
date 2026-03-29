@@ -212,6 +212,12 @@ export class ZsFieldDatagrid extends LitElement {
               sortable: true,
               type: this.guessColumnType(k, sample[k]),
             }));
+
+          // Emit columns back so the designer can persist them in the schema
+          this.dispatchEvent(new CustomEvent('grid-config-change', {
+            detail: { columns: this.autoColumns },
+            bubbles: true, composed: true,
+          }));
         }
       }
     } catch (err) {

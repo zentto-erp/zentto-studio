@@ -603,6 +603,12 @@ export class ZsPageDesigner extends LitElement {
 
   // ─── Lifecycle ────────────────────────────────────
 
+  connectedCallback() {
+    super.connectedCallback();
+    // Listen for grid-config-change from nested zs-field-datagrid (preview mode)
+    this.addEventListener('grid-config-change', this.handleGridConfigChange as EventListener);
+  }
+
   updated(changed: Map<string, unknown>) {
     if (changed.has('schema') && this.schema && this.undoStack.length === 0) {
       this.undoStack = [JSON.stringify(this.schema)];
@@ -616,7 +622,51 @@ export class ZsPageDesigner extends LitElement {
   disconnectedCallback() {
     super.disconnectedCallback();
     this.cleanupInteract();
+    this.removeEventListener('grid-config-change', this.handleGridConfigChange as EventListener);
   }
+
+  /** Build preview schema with resolved endpoints and auth for datagrid/report fields */
+  private getPreviewSchema(): StudioSchema | null {
+    if (!this.schema) return null;
+    const base = this.getApiBase();
+    const headers = this.getApiHeaders();
+    const token = this.saveApiToken || this.apiToken || '';
+    const clone = JSON.parse(JSON.stringify(this.schema)) as StudioSchema;
+    for (const section of clone.sections) {
+      for (const field of section.fields) {
+        if ((field.type === 'datagrid' || field.type === 'report') && field.props) {
+          const ep = field.props.endpoint as string;
+          if (ep && !ep.startsWith('http') && base) {
+            field.props.endpoint = `${base}${ep.startsWith('/') ? '' : '/'}${ep}`;
+          }
+          field.props.authToken = token;
+          field.props.authHeaders = headers;
+        }
+      }
+    }
+    return clone;
+  }
+
+  /** When a datagrid auto-generates columns, persist them in the schema */
+  private handleGridConfigChange = (e: Event) => {
+    const detail = (e as CustomEvent).detail;
+    if (!detail?.columns || !this.schema) return;
+
+    // Find the datagrid field that emitted this
+    for (const section of this.schema.sections) {
+      for (const field of section.fields) {
+        if (field.type === 'datagrid') {
+          // Only update if this field has no columns yet
+          if (!field.props) field.props = {};
+          if (!field.props.columns || (field.props.columns as unknown[]).length === 0) {
+            field.props.columns = detail.columns;
+            this.commitChange();
+          }
+          return;
+        }
+      }
+    }
+  };
 
   // ─── InteractJS Integration ───────────────────────
 
@@ -1474,7 +1524,7 @@ export class ZsPageDesigner extends LitElement {
         ${this.viewMode === 'json'
           ? html`<div class="json-panel" style="width:100%;max-width:800px;">${JSON.stringify(this.schema, null, 2)}</div>`
           : this.viewMode === 'preview'
-            ? html`<div class="canvas" style="transform:scale(${this.zoom});"><zentto-studio-renderer .schema="${this.schema}" .data="${this.data}"></zentto-studio-renderer></div>`
+            ? html`<div class="canvas" style="transform:scale(${this.zoom});"><zentto-studio-renderer .schema="${this.getPreviewSchema()}" .data="${this.data}"></zentto-studio-renderer></div>`
             : this.renderDesignCanvas()
         }
       </div>
