@@ -404,8 +404,6 @@ export class ZenttoStudioRenderer extends LitElement {
 
     return html`
       <div class="zs-section">
-        ${section.title ? html`<h3 class="zs-section-title">${section.title}</h3>` : ''}
-        ${section.description ? html`<p class="zs-section-description">${section.description}</p>` : ''}
         <div class="zs-section-grid" style="grid-template-columns: repeat(${columns}, 1fr); gap: ${gap}px;">
           ${section.fields.map(field => this.renderField(field))}
         </div>

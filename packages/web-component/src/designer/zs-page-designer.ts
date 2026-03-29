@@ -1524,13 +1524,52 @@ export class ZsPageDesigner extends LitElement {
               `;
             })}
           ` : this.leftTab === 'sections' ? html`
+            <!-- Layout presets -->
+            <div style="padding:4px 8px;margin-bottom:8px;">
+              <div style="font-size:9px;font-weight:600;color:#aaa;text-transform:uppercase;margin-bottom:6px;">Layouts de Columnas</div>
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;">
+                ${[
+                  { cols: 1, label: '1 col', icon: '▮' },
+                  { cols: 2, label: '2 cols', icon: '▮▮' },
+                  { cols: 3, label: '3 cols', icon: '▮▮▮' },
+                  { cols: 4, label: '4 cols', icon: '▮▮▮▮' },
+                  { cols: 6, label: '6 cols', icon: '▮▮▮▮▮▮' },
+                ].map(l => html`
+                  <button style="padding:6px 4px;border:1px solid #ddd;border-radius:6px;background:white;cursor:pointer;font-size:9px;font-family:inherit;text-align:center;transition:all 0.15s;line-height:1.3;"
+                    @click="${() => { if (this.schema) { this.schema.sections.push({ id: 'section_' + Date.now(), title: 'Seccion ' + l.label, fields: [], columns: l.cols }); this.commitChange(); } }}"
+                    title="Agregar seccion de ${l.cols} columnas"
+                  >
+                    <div style="font-size:12px;letter-spacing:-1px;">${l.icon}</div>
+                    <div>${l.label}</div>
+                  </button>
+                `)}
+                <button style="padding:6px 4px;border:1px solid #ddd;border-radius:6px;background:white;cursor:pointer;font-size:9px;font-family:inherit;text-align:center;transition:all 0.15s;line-height:1.3;"
+                  @click="${() => { if (this.schema) { this.schema.sections.push({ id: 'sidebar_' + Date.now(), title: 'Sidebar + Contenido', fields: [], columns: 4 }); this.commitChange(); } }}"
+                  title="Layout sidebar (1/4 + 3/4)"
+                >
+                  <div style="font-size:12px;">▎▮▮▮</div>
+                  <div>sidebar</div>
+                </button>
+              </div>
+            </div>
+            <div style="border-top:1px solid #eee;margin:4px 8px;"></div>
+            <!-- Existing sections -->
+            <div style="padding:4px 0;">
+              <div style="font-size:9px;font-weight:600;color:#aaa;text-transform:uppercase;padding:4px 12px;margin-bottom:2px;">Secciones Actuales</div>
+            </div>
             ${this.schema?.sections.map((s, i) => html`
               <div style="padding:8px 10px;margin:2px 4px;background:${i % 2 === 0 ? '#f8f9fa' : 'white'};border-radius:6px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:8px;border:1px solid #eee;transition:all 0.15s;"
                 @click="${() => { /* scroll to section */ }}"
               >
                 <span style="background:#e3f2fd;color:#1976d2;font-weight:700;font-size:10px;padding:2px 6px;border-radius:4px;">§${i + 1}</span>
                 <span style="flex:1;font-weight:500;">${s.title ?? 'Sin titulo'}</span>
+                <span style="color:#999;font-size:9px;background:#f0f0f0;padding:1px 5px;border-radius:3px;">${s.columns ?? this.schema?.layout.columns ?? 2}c</span>
                 <span style="color:#aaa;font-size:10px;">${s.fields.length}</span>
+                ${(this.schema?.sections.length ?? 0) > 1 ? html`
+                  <button style="border:none;background:none;cursor:pointer;color:#d32f2f;font-size:11px;padding:2px;" title="Eliminar seccion"
+                    @click="${(e: Event) => { e.stopPropagation(); if (this.schema) { this.schema.sections.splice(i, 1); this.commitChange(); } }}"
+                  >✕</button>
+                ` : nothing}
               </div>
             `) ?? nothing}
             <button style="margin:8px 4px;padding:8px;width:calc(100% - 8px);border:1px dashed #ccc;border-radius:6px;background:none;cursor:pointer;font-size:11px;color:#888;font-family:inherit;transition:all 0.15s;"
