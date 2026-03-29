@@ -310,6 +310,7 @@ export class ZsFieldDatagrid extends LitElement {
     return html`
       <div class="zs-datagrid-container" style="height: ${this.gridHeight}">
         <zentto-grid
+          grid-id="${(this.config?.props?.gridId as string) || this.config?.id || 'studio-grid'}"
           .columns="${this.columns}"
           .rows="${this.gridRows}"
           .dataSourceId="${this.dataSourceId}"
