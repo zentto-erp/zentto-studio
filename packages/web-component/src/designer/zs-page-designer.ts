@@ -1688,8 +1688,15 @@ export class ZsPageDesigner extends LitElement {
 
   private getPreviewContent(field: FieldConfig): string {
     if (field.type === 'switch') return '⬤───────';
-    if (field.type === 'separator') return '';
+    if (field.type === 'separator' || field.type === 'spacer') return '';
     if (field.type === 'heading') return field.label ?? 'Titulo';
+    if (field.type === 'button' || field.type === 'link') return `▣ ${(field.props?.buttonLabel as string) ?? field.label ?? 'Boton'}`;
+    if (field.type === 'alert') return '⚠ Alerta';
+    if (field.type === 'badge') return `● ${(field.props?.badgeText as string) ?? 'Badge'}`;
+    if (field.type === 'card') return '▭ Card';
+    if (field.type === 'progress') return '▰▰▰▱▱ Progreso';
+    if (field.type === 'avatar') return '👤 Avatar';
+    if (field.type === 'icon') return `${(field.props?.iconName as string) ?? '★'} Icono`;
     if (field.type === 'datagrid') return '◫ ZenttoDataGrid';
     if (field.type === 'report') return '◫ ZenttoReportViewer';
     if (field.type === 'chart') return '◫ Chart SVG';
@@ -1704,6 +1711,12 @@ export class ZsPageDesigner extends LitElement {
   }
 
   // ─── Right Panel (Properties — Figma-quality) ──────
+
+  private setProp(field: FieldConfig, key: string, value: unknown) {
+    if (!field.props) field.props = {};
+    field.props[key] = value;
+    this.commitChange();
+  }
 
   private renderRightPanel() {
     const field = this.selectedField;
@@ -1836,6 +1849,70 @@ export class ZsPageDesigner extends LitElement {
             ` : ''}
           ` : ''}
         </div>
+
+        <!-- Button/Link specific props -->
+        ${field.type === 'button' || field.type === 'link' ? html`
+          <div class="prop-section">
+            <div class="prop-section-header" data-section="layout" @click="${() => this.toggleSection('button-config')}">
+              <span class="collapse-icon ${this.collapsedSections.has('button-config') ? 'collapse-icon--collapsed' : ''}">▾</span>
+              <h4>Accion del Boton</h4>
+            </div>
+            ${!this.collapsedSections.has('button-config') ? html`
+              <div class="prop-row"><span class="prop-label">Texto</span><input class="prop-input" .value="${(field.props?.buttonLabel as string) ?? 'Accion'}" @change="${(e: Event) => this.setProp(field, 'buttonLabel', (e.target as HTMLInputElement).value)}" /></div>
+              <div class="prop-row"><span class="prop-label">Icono</span><input class="prop-input" .value="${(field.props?.icon as string) ?? ''}" placeholder="💾 📤 ✓" style="width:50px;" @change="${(e: Event) => this.setProp(field, 'icon', (e.target as HTMLInputElement).value)}" /></div>
+              <div class="prop-row"><span class="prop-label">Estilo</span>
+                <select class="prop-input" .value="${(field.props?.variant as string) ?? 'primary'}" @change="${(e: Event) => this.setProp(field, 'variant', (e.target as HTMLSelectElement).value)}">
+                  <option value="primary">Primario</option>
+                  <option value="secondary">Secundario</option>
+                  <option value="danger">Peligro</option>
+                  <option value="success">Exito</option>
+                  <option value="warning">Advertencia</option>
+                  <option value="ghost">Ghost</option>
+                </select>
+              </div>
+              <div class="prop-row"><span class="prop-label">Tamano</span>
+                <select class="prop-input" .value="${(field.props?.size as string) ?? 'medium'}" @change="${(e: Event) => this.setProp(field, 'size', (e.target as HTMLSelectElement).value)}">
+                  <option value="small">Pequeno</option>
+                  <option value="medium">Mediano</option>
+                  <option value="large">Grande</option>
+                </select>
+              </div>
+              ${this.renderToggle('Ancho completo', (field.props?.fullWidth as boolean) ?? false, (v) => this.setProp(field, 'fullWidth', v))}
+              <div class="prop-divider"></div>
+              <div class="prop-row"><span class="prop-label">Tipo accion</span>
+                <select class="prop-input" .value="${(field.props?.actionType as string) ?? 'custom'}" @change="${(e: Event) => this.setProp(field, 'actionType', (e.target as HTMLSelectElement).value)}">
+                  <option value="custom">Evento custom</option>
+                  <option value="submit">Enviar formulario</option>
+                  <option value="apiCall">Llamar API</option>
+                  <option value="navigate">Navegar</option>
+                  <option value="reset">Limpiar form</option>
+                  <option value="print">Imprimir</option>
+                </select>
+              </div>
+              ${(field.props?.actionType as string) === 'apiCall' || (field.props?.actionType as string) === 'submit' ? html`
+                <div class="prop-row"><span class="prop-label">URL</span><input class="prop-input" style="font-family:'SF Mono','Consolas',monospace;font-size:10px;" .value="${(field.props?.actionUrl as string) ?? ''}" placeholder="/v1/clientes" @change="${(e: Event) => this.setProp(field, 'actionUrl', (e.target as HTMLInputElement).value)}" /></div>
+                <div class="prop-row"><span class="prop-label">Metodo</span>
+                  <select class="prop-input" .value="${(field.props?.actionMethod as string) ?? 'POST'}" @change="${(e: Event) => this.setProp(field, 'actionMethod', (e.target as HTMLSelectElement).value)}">
+                    <option value="GET">GET</option>
+                    <option value="POST">POST</option>
+                    <option value="PUT">PUT</option>
+                    <option value="DELETE">DELETE</option>
+                  </select>
+                </div>
+              ` : ''}
+              ${(field.props?.actionType as string) === 'navigate' ? html`
+                <div class="prop-row"><span class="prop-label">Ruta</span><input class="prop-input" .value="${(field.props?.navigateTo as string) ?? ''}" placeholder="/clientes/{id}" @change="${(e: Event) => this.setProp(field, 'navigateTo', (e.target as HTMLInputElement).value)}" /></div>
+              ` : ''}
+              ${(field.props?.actionType as string) === 'custom' ? html`
+                <div class="prop-row"><span class="prop-label">Evento</span><input class="prop-input" .value="${(field.props?.eventName as string) ?? ''}" placeholder="onSave" @change="${(e: Event) => this.setProp(field, 'eventName', (e.target as HTMLInputElement).value)}" /></div>
+              ` : ''}
+              <div class="prop-divider"></div>
+              <div class="prop-row"><span class="prop-label">Confirmar</span><input class="prop-input" .value="${(field.props?.confirmMessage as string) ?? ''}" placeholder="Esta seguro?" @change="${(e: Event) => this.setProp(field, 'confirmMessage', (e.target as HTMLInputElement).value)}" /></div>
+              <div class="prop-row"><span class="prop-label">Msg exito</span><input class="prop-input" .value="${(field.props?.successMessage as string) ?? ''}" @change="${(e: Event) => this.setProp(field, 'successMessage', (e.target as HTMLInputElement).value)}" /></div>
+              <div class="prop-row"><span class="prop-label">Msg error</span><input class="prop-input" .value="${(field.props?.errorMessage as string) ?? ''}" @change="${(e: Event) => this.setProp(field, 'errorMessage', (e.target as HTMLInputElement).value)}" /></div>
+            ` : ''}
+          </div>
+        ` : nothing}
       </div>
     `;
   }

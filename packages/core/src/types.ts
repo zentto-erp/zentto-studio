@@ -16,6 +16,8 @@ export type FieldType =
   | 'datagrid' | 'report' | 'chart'
   | 'html' | 'separator' | 'heading' | 'media'
   | 'chips' | 'treeview'
+  | 'button' | 'link' | 'spacer' | 'icon' | 'alert' | 'badge'
+  | 'card' | 'tabs' | 'accordion' | 'progress' | 'avatar'
   | 'custom';
 
 // ─── Layout Types ─────────────────────────────────────────────────

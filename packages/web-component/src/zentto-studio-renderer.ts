@@ -25,6 +25,7 @@ import './fields/zs-field-switch.js';
 import './fields/zs-field-file.js';
 import './fields/zs-field-lookup.js';
 import './fields/zs-field-separator.js';
+import './fields/zs-field-button.js';
 import './fields/zs-field-heading.js';
 import './fields/zs-field-html.js';
 import './fields/zs-field-signature.js';
@@ -576,6 +577,9 @@ export class ZenttoStudioRenderer extends LitElement {
           .label="${baseAttrs.label}" .helpText="${baseAttrs.helpText}"
           .level="${(props.level as string) ?? 'h2'}"
         ></zs-field-heading>`;
+
+      case 'zs-field-button':
+        return html`<zs-field-button .config="${field}"></zs-field-button>`;
 
       case 'zs-field-html':
         return html`<zs-field-html
