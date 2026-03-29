@@ -7,7 +7,8 @@ import { customElement, property, state } from 'lit/decorators.js';
 import { studioTokens, fieldBaseStyles } from '../styles/tokens.js';
 import type { AppConfig, NavItem, PageConfig, BrandingConfig, CardItem } from '@zentto/studio-core';
 import type { DataSourceConfig, ThemeConfig } from '@zentto/studio-core';
-import { listAppTemplates, getAppTemplate } from '@zentto/studio-core';
+import { listAppTemplates, getAppTemplate, API_CATALOG } from '@zentto/studio-core';
+import type { ApiModule } from '@zentto/studio-core';
 import { generateReactComponent, generateNextPage, generateAppPage } from '@zentto/studio-core';
 import type { AppTemplateId } from '@zentto/studio-core';
 
@@ -734,23 +735,37 @@ export class ZsAppWizard extends LitElement {
                 </div>
               ` : ''}
 
-              <!-- Option 2: Quick endpoint selector -->
+              <!-- Option 2: API Catalog selector -->
               <div>
-                <label style="font-size:10px;color:#aaa;display:block;margin-bottom:3px;">O selecciona un endpoint rapido</label>
-                <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px;">
-                  ${[
-                    { label: 'Clientes', ep: '/v1/clientes' },
-                    { label: 'Articulos', ep: '/v1/articulos' },
-                    { label: 'Facturas', ep: '/v1/documentos-venta' },
-                    { label: 'Empleados', ep: '/v1/empleados' },
-                    { label: 'Cuentas', ep: '/v1/plan-cuentas' },
-                    { label: 'Proveedores', ep: '/v1/proveedores' },
-                    { label: 'Bancos', ep: '/v1/bancos' },
-                    { label: 'Paises', ep: '/v1/config/countries' },
-                  ].map(api => html`
-                    <button style="padding:3px 8px;border:1px solid ${this.getPageEndpoint(page) === api.ep ? '#e67e22' : '#ddd'};border-radius:4px;background:${this.getPageEndpoint(page) === api.ep ? '#fff7ed' : 'white'};cursor:pointer;font-size:10px;font-family:inherit;color:${this.getPageEndpoint(page) === api.ep ? '#e67e22' : '#888'};transition:all 0.15s;"
-                      @click="${() => { this.setPageDataSource(page, `ds_${page.segment}`, api.ep); this.requestUpdate(); }}"
-                    >${api.label}</button>
+                <label style="font-size:10px;color:#aaa;display:block;margin-bottom:3px;">O selecciona un endpoint del catalogo</label>
+                <div style="max-height:200px;overflow-y:auto;border:1px solid #eee;border-radius:6px;background:white;">
+                  ${API_CATALOG.map(mod => html`
+                    <div>
+                      <div style="padding:5px 10px;background:#f8f9fa;font-size:10px;font-weight:600;color:#888;display:flex;align-items:center;gap:6px;border-bottom:1px solid #eee;cursor:pointer;user-select:none;"
+                        @click="${(e: Event) => {
+                          const next = (e.currentTarget as HTMLElement).nextElementSibling as HTMLElement;
+                          if (next) next.style.display = next.style.display === 'none' ? 'block' : 'none';
+                        }}"
+                      >
+                        <span>${mod.icon}</span>
+                        <span style="flex:1;">${mod.label}</span>
+                        <span style="font-size:8px;color:#bbb;">${mod.endpoints.length}</span>
+                        <span style="font-size:8px;color:#ccc;">▾</span>
+                      </div>
+                      <div style="display:none;">
+                        ${mod.endpoints.map(ep => html`
+                          <div style="padding:4px 10px 4px 28px;font-size:11px;cursor:pointer;display:flex;align-items:center;gap:6px;border-bottom:1px solid #f5f5f5;transition:background 0.1s;${this.getPageEndpoint(page) === ep.path ? 'background:#fff7ed;' : ''}"
+                            @click="${() => { this.setPageDataSource(page, `ds_${page.segment}`, ep.path); this.requestUpdate(); }}"
+                            @mouseenter="${(e: Event) => { if (this.getPageEndpoint(page) !== ep.path) (e.currentTarget as HTMLElement).style.background = '#f8f9fa'; }}"
+                            @mouseleave="${(e: Event) => { if (this.getPageEndpoint(page) !== ep.path) (e.currentTarget as HTMLElement).style.background = ''; }}"
+                          >
+                            <span style="font-size:9px;color:${this.getPageEndpoint(page) === ep.path ? '#e67e22' : '#27ae60'};font-weight:600;">${ep.method}</span>
+                            <span style="flex:1;color:${this.getPageEndpoint(page) === ep.path ? '#e67e22' : '#555'};">${ep.label}</span>
+                            <span style="font-size:9px;color:#ccc;font-family:'SF Mono','Consolas',monospace;">${ep.path}</span>
+                          </div>
+                        `)}
+                      </div>
+                    </div>
                   `)}
                 </div>
               </div>

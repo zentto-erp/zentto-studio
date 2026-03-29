@@ -154,3 +154,7 @@ export type {
   StudioProvider,
 } from './providers.js';
 export { DEFAULT_PROVIDER, mergeProviders, resolveIcon } from './providers.js';
+
+// API Catalog
+export { API_CATALOG, getAllEndpoints, searchEndpoints } from './api-catalog.js';
+export type { ApiEndpoint, ApiModule } from './api-catalog.js';
