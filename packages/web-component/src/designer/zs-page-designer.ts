@@ -1020,6 +1020,77 @@ export class ZsPageDesigner extends LitElement {
     this.commitChange();
   }
 
+  /** Handle drop from toolbox OR API fields — unified */
+  private handleCanvasDrop(e: DragEvent, sectionIndex: number) {
+    e.preventDefault();
+    const fieldName = e.dataTransfer?.getData('field-name');
+    const dsId = e.dataTransfer?.getData('ds-id');
+
+    if (fieldName && dsId) {
+      // Drop from API tab — create field with smart type + binding
+      this.addApiField(fieldName, dsId, sectionIndex);
+    } else if (this.dragType) {
+      // Drop from toolbox
+      this.addField(this.dragType, sectionIndex);
+    }
+    this.dragType = null;
+  }
+
+  /** Add a field from an API data source with smart type detection */
+  private addApiField(fieldName: string, dsId: string, sectionIndex = 0) {
+    if (!this.schema) {
+      this.schema = {
+        id: 'new-form', version: '1.0', title: 'Nuevo Formulario',
+        layout: { type: 'grid', columns: 2 },
+        sections: [{ id: 'main', title: 'Datos', fields: [] }],
+      };
+      this.undoStack = [JSON.stringify(this.schema)];
+    }
+    if (sectionIndex >= this.schema.sections.length) sectionIndex = 0;
+
+    const type = this.inferFieldType(fieldName);
+    const id = `${fieldName.toLowerCase().replace(/[^a-z0-9]/g, '_')}_${Date.now()}`;
+    const label = this.humanizeFieldName(fieldName);
+    const meta = getAllFields().find(f => f.type === type);
+
+    this.schema.sections[sectionIndex].fields.push({
+      id,
+      type,
+      field: fieldName,
+      label,
+      props: { ...meta?.defaultProps, dataSourceId: dsId },
+    });
+    this.selectedFieldId = id;
+    this.commitChange();
+  }
+
+  /** Infer field type from column/field name */
+  private inferFieldType(name: string): FieldType {
+    const lower = name.toLowerCase();
+    if (lower.includes('email') || lower.includes('correo')) return 'email';
+    if (lower.includes('phone') || lower.includes('telefono') || lower.includes('celular')) return 'phone';
+    if (lower.includes('fecha') || lower.includes('date') || lower.includes('nacimiento') || lower.includes('ingreso') || lower.includes('vencimiento')) return 'date';
+    if (lower.includes('precio') || lower.includes('price') || lower.includes('costo') || lower.includes('monto') || lower.includes('total') || lower.includes('saldo') || lower.includes('salario') || lower.includes('limite')) return 'currency';
+    if (lower.includes('cantidad') || lower.includes('qty') || lower.includes('stock') || lower.includes('edad')) return 'number';
+    if (lower.includes('activ') || lower.includes('active') || lower.includes('enabled') || lower.includes('visible')) return 'switch';
+    if (lower.includes('descripcion') || lower.includes('description') || lower.includes('notas') || lower.includes('notes') || lower.includes('observ')) return 'textarea';
+    if (lower.includes('password') || lower.includes('clave')) return 'password';
+    if (lower.includes('url') || lower.includes('website') || lower.includes('link')) return 'url';
+    if (lower.includes('imagen') || lower.includes('image') || lower.includes('foto') || lower.includes('avatar')) return 'image';
+    if (lower.includes('pais') || lower.includes('country') || lower.includes('estado') || lower.includes('tipo') || lower.includes('status') || lower.includes('genero') || lower.includes('categoria')) return 'select';
+    if (lower.includes('direccion') || lower.includes('address')) return 'address';
+    return 'text';
+  }
+
+  /** Convert FIELD_NAME to "Field Name" */
+  private humanizeFieldName(name: string): string {
+    return name
+      .replace(/([A-Z])/g, ' $1')
+      .replace(/[_-]/g, ' ')
+      .replace(/\b\w/g, c => c.toUpperCase())
+      .trim();
+  }
+
   private removeField(si: number, fi: number) {
     if (!this.schema) return;
     const f = this.schema.sections[si].fields[fi];
@@ -1199,10 +1270,10 @@ export class ZsPageDesigner extends LitElement {
 
   private renderDesignCanvas() {
     if (!this.schema) {
-      return html`<div class="drop-zone ${this.dragType ? 'drop-zone--active' : ''}" data-section-index="0" style="width:500px;height:200px;display:flex;align-items:center;justify-content:center;"
+      return html`<div class="drop-zone drop-zone--active" data-section-index="0" style="width:500px;height:200px;display:flex;align-items:center;justify-content:center;"
         @dragover="${(e: DragEvent) => e.preventDefault()}"
-        @drop="${(e: DragEvent) => { e.preventDefault(); if (this.dragType) { this.addField(this.dragType); this.dragType = null; } }}"
-      >Arrastra un campo aqui para empezar</div>`;
+        @drop="${(e: DragEvent) => this.handleCanvasDrop(e, 0)}"
+      >Arrastra campos del toolbox o de la API aqui</div>`;
     }
 
     const cols = this.schema.layout.columns ?? 1;
@@ -1223,9 +1294,10 @@ export class ZsPageDesigner extends LitElement {
             </div>
             <div class="drop-zone ${this.dragType ? 'drop-zone--active' : ''}"
               data-section-index="${si}"
-              @dragover="${(e: DragEvent) => e.preventDefault()}"
-              @drop="${(e: DragEvent) => { e.preventDefault(); if (this.dragType) { this.addField(this.dragType, si); this.dragType = null; } }}"
-            >${this.dragType ? '↓ Soltar aqui' : '+ Arrastra campos'}</div>
+              @dragover="${(e: DragEvent) => { e.preventDefault(); (e.currentTarget as HTMLElement).classList.add('drop-zone--active'); }}"
+              @dragleave="${(e: DragEvent) => { if (!this.dragType) (e.currentTarget as HTMLElement).classList.remove('drop-zone--active'); }}"
+              @drop="${(e: DragEvent) => this.handleCanvasDrop(e, si)}"
+            >${this.dragType ? '↓ Soltar aqui' : '+ Arrastra campos o campos de API'}</div>
           </div>
         `)}
       </div>
@@ -1516,12 +1588,7 @@ export class ZsPageDesigner extends LitElement {
                     <div style="display:flex;align-items:center;gap:6px;padding:4px 6px;font-size:11px;cursor:grab;border-radius:3px;transition:background 0.1s;"
                       draggable="true"
                       @dragstart="${(e: DragEvent) => { this.dragType = 'text' as FieldType; e.dataTransfer?.setData('text/plain', 'text'); e.dataTransfer?.setData('field-name', field); e.dataTransfer?.setData('ds-id', src.id); }}"
-                      @dblclick="${() => {
-                        // Auto-create a field bound to this API field
-                        this.addField('text');
-                        const lastField = this.schema?.sections[0]?.fields[this.schema.sections[0].fields.length - 1];
-                        if (lastField) { lastField.field = field; lastField.label = field.charAt(0).toUpperCase() + field.slice(1).replace(/([A-Z])/g, ' $1'); if (!lastField.props) lastField.props = {}; lastField.props.dataSourceId = src.id; this.commitChange(); }
-                      }}"
+                      @dblclick="${() => this.addApiField(field, src.id)}"
                     >
                       <span style="color:#1976d2;font-size:10px;">⬡</span>
                       <span style="color:#555;">${field}</span>
