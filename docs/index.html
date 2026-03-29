@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zentto Studio — Documentation</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif; background: #fafafa; color: #333; }
+    .hero { background: linear-gradient(135deg, #1e1e2d 0%, #2d1e3e 100%); color: white; padding: 80px 40px; text-align: center; }
+    .hero h1 { font-size: 48px; font-weight: 800; margin-bottom: 12px; }
+    .hero h1 span { color: #e67e22; }
+    .hero p { font-size: 20px; color: #a2a3b7; max-width: 700px; margin: 0 auto 32px; line-height: 1.6; }
+    .hero-badges { display: flex; gap: 8px; justify-content: center; margin-bottom: 32px; }
+    .hero-badges img { height: 24px; }
+    .hero-cta { display: inline-flex; gap: 12px; }
+    .hero-cta a { padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px; transition: all 0.2s; }
+    .btn-primary { background: #e67e22; color: white; }
+    .btn-primary:hover { background: #d35400; transform: translateY(-2px); }
+    .btn-secondary { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); }
+    .btn-secondary:hover { background: rgba(255,255,255,0.15); }
+    .container { max-width: 1100px; margin: 0 auto; padding: 60px 40px; }
+    .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 40px; }
+    .feature { background: white; padding: 28px; border-radius: 12px; border: 1px solid #eee; transition: all 0.2s; }
+    .feature:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
+    .feature-icon { font-size: 32px; margin-bottom: 12px; }
+    .feature h3 { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+    .feature p { font-size: 14px; color: #666; line-height: 1.6; }
+    h2 { font-size: 32px; font-weight: 700; text-align: center; margin-bottom: 16px; }
+    .subtitle { text-align: center; color: #888; font-size: 16px; margin-bottom: 32px; }
+    .code-block { background: #1e1e2d; color: #e6e6e6; padding: 24px; border-radius: 8px; font-family: 'SF Mono', 'Consolas', monospace; font-size: 14px; line-height: 1.6; overflow-x: auto; margin: 24px 0; }
+    .code-block .comment { color: #6a737d; }
+    .code-block .string { color: #a5d6ff; }
+    .code-block .keyword { color: #ff7b72; }
+    .packages { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 32px; }
+    .package { background: white; padding: 24px; border-radius: 12px; border: 1px solid #eee; text-align: center; }
+    .package h4 { font-size: 16px; margin: 8px 0 4px; }
+    .package code { background: #f5f5f5; padding: 2px 8px; border-radius: 4px; font-size: 13px; color: #e67e22; }
+    .package p { font-size: 13px; color: #888; margin-top: 8px; }
+    .docs-links { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 32px; }
+    .doc-link { display: flex; align-items: center; gap: 12px; padding: 16px 20px; background: white; border: 1px solid #eee; border-radius: 10px; text-decoration: none; color: #333; transition: all 0.2s; }
+    .doc-link:hover { border-color: #e67e22; transform: translateX(4px); }
+    .doc-link-icon { font-size: 24px; }
+    .doc-link-title { font-weight: 600; font-size: 15px; }
+    .doc-link-desc { font-size: 12px; color: #888; }
+    .footer { text-align: center; padding: 40px; color: #aaa; font-size: 14px; border-top: 1px solid #eee; margin-top: 40px; }
+    .footer a { color: #e67e22; text-decoration: none; }
+    @media (max-width: 768px) { .features, .packages { grid-template-columns: 1fr; } .docs-links { grid-template-columns: 1fr; } .hero h1 { font-size: 32px; } }
+  </style>
+</head>
+<body>
+  <div class="hero">
+    <div class="hero-badges">
+      <img src="https://img.shields.io/npm/v/@zentto/studio?color=e67e22&label=npm" alt="npm">
+      <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT">
+      <img src="https://img.shields.io/badge/lit-3.x-blue" alt="Lit">
+    </div>
+    <h1>Zentto <span>Studio</span></h1>
+    <p>Runtime UI builder as a web component. Generate full applications from JSON — forms, grids, charts, dashboards — in any framework.</p>
+    <div class="hero-cta">
+      <a href="https://github.com/zentto-erp/zentto-studio" class="btn-primary">GitHub</a>
+      <a href="#quick-start" class="btn-secondary">Get Started</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <h2>Why Zentto Studio?</h2>
+    <p class="subtitle">One JSON config. Any framework. Full application.</p>
+
+    <div class="features">
+      <div class="feature">
+        <div class="feature-icon">📋</div>
+        <h3>30+ Field Types</h3>
+        <p>Text, number, date, select, chips, tree view, signature, address, file upload, charts, and more.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🎨</div>
+        <h3>Visual Designer</h3>
+        <p>Figma-style drag-drop editor with undo/redo, autosave, live preview, and API connection.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">⚡</div>
+        <h3>Expression Engine</h3>
+        <p>Safe recursive parser for computed values, visibility rules, and validation — no eval().</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🔌</div>
+        <h3>API Integration</h3>
+        <p>Connect to any REST/GraphQL endpoint. Auto-detect fields. Auth built-in.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🏗️</div>
+        <h3>Full App Shell</h3>
+        <p>Sidebar, header, routing, pages, KPI cards, data grids, charts — from one JSON config.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🌐</div>
+        <h3>Framework Agnostic</h3>
+        <p>Vanilla JS, React, Vue, Angular, Blazor, Vite — works everywhere web components work.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="container" id="quick-start">
+    <h2>Quick Start</h2>
+    <p class="subtitle">Get a form running in under 30 seconds</p>
+
+    <div class="code-block">
+<span class="comment">&lt;!-- Just add one script tag --&gt;</span>
+&lt;script type="module" src="https://unpkg.com/@zentto/studio@latest/dist/zentto-studio-renderer.js"&gt;&lt;/script&gt;
+
+<span class="comment">&lt;!-- Use the web component --&gt;</span>
+&lt;zentto-studio-renderer id="form"&gt;&lt;/zentto-studio-renderer&gt;
+
+&lt;script&gt;
+  document.getElementById(<span class="string">'form'</span>).schema = {
+    id: <span class="string">'demo'</span>, version: <span class="string">'1.0'</span>, title: <span class="string">'Contact'</span>,
+    layout: { type: <span class="string">'grid'</span>, columns: 2 },
+    sections: [{ id: <span class="string">'main'</span>, fields: [
+      { id: <span class="string">'name'</span>, type: <span class="string">'text'</span>, field: <span class="string">'name'</span>, label: <span class="string">'Name'</span>, required: <span class="keyword">true</span> },
+      { id: <span class="string">'email'</span>, type: <span class="string">'email'</span>, field: <span class="string">'email'</span>, label: <span class="string">'Email'</span> },
+    ]}],
+    actions: [{ id: <span class="string">'send'</span>, type: <span class="string">'submit'</span>, label: <span class="string">'Send'</span>, variant: <span class="string">'primary'</span> }]
+  };
+&lt;/script&gt;
+    </div>
+  </div>
+
+  <div class="container">
+    <h2>Packages</h2>
+    <div class="packages">
+      <div class="package">
+        <div style="font-size:32px;">🧠</div>
+        <h4>Core</h4>
+        <code>@zentto/studio-core</code>
+        <p>Types, validation, expressions, data binding, rules, i18n</p>
+      </div>
+      <div class="package">
+        <div style="font-size:32px;">🎨</div>
+        <h4>Web Component</h4>
+        <code>@zentto/studio</code>
+        <p>Lit components: renderer, designer, app shell, fields, modals</p>
+      </div>
+      <div class="package">
+        <div style="font-size:32px;">⚛️</div>
+        <h4>React</h4>
+        <code>@zentto/studio-react</code>
+        <p>React wrapper with event bindings via @lit/react</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <h2>Documentation</h2>
+    <div class="docs-links">
+      <a href="developer-guide.html" class="doc-link">
+        <span class="doc-link-icon">👨‍💻</span>
+        <div><div class="doc-link-title">Developer Guide</div><div class="doc-link-desc">API reference, types, architecture, theming</div></div>
+      </a>
+      <a href="user-guide.html" class="doc-link">
+        <span class="doc-link-icon">📖</span>
+        <div><div class="doc-link-title">User Guide</div><div class="doc-link-desc">How to design forms, connect APIs, use templates</div></div>
+      </a>
+      <a href="https://github.com/zentto-erp/zentto-studio/tree/main/examples" class="doc-link">
+        <span class="doc-link-icon">📦</span>
+        <div><div class="doc-link-title">Examples</div><div class="doc-link-desc">Vanilla, React, Vue, Angular, Blazor, Vite</div></div>
+      </a>
+      <a href="https://github.com/zentto-erp/zentto-studio" class="doc-link">
+        <span class="doc-link-icon">🐙</span>
+        <div><div class="doc-link-title">GitHub Repository</div><div class="doc-link-desc">Source code, issues, contributions</div></div>
+      </a>
+    </div>
+  </div>
+
+  <div class="footer">
+    <p>Built by <a href="https://zentto.net">Zentto</a> — Open Source under MIT License</p>
+  </div>
+</body>
+</html>

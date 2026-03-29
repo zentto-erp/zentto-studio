@@ -1,0 +1,47 @@
+{
+  "name": "@zentto/studio-core",
+  "version": "0.5.2",
+  "description": "Core logic engine for Zentto Studio — runtime UI builder. Schema validation, expression engine, data binding, and rule evaluation.",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^3.2.4",
+    "vitest": "^3.2.4"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zentto-erp/zentto-studio"
+  },
+  "keywords": [
+    "zentto",
+    "studio",
+    "form-builder",
+    "runtime-ui",
+    "json-schema",
+    "expression-engine",
+    "dynamic-forms"
+  ]
+}

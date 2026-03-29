@@ -1,0 +1,59 @@
+{
+  "name": "@zentto/studio",
+  "version": "0.5.2",
+  "description": "Zentto Studio — runtime UI builder web components. Renders dynamic forms, dashboards, and wizards from JSON schemas.",
+  "type": "module",
+  "main": "dist/zentto-studio-renderer.js",
+  "types": "dist/zentto-studio-renderer.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/zentto-studio-renderer.d.ts",
+      "import": "./dist/zentto-studio-renderer.js"
+    },
+    "./designer": {
+      "types": "./dist/zentto-studio-designer.d.ts",
+      "import": "./dist/zentto-studio-designer.js"
+    },
+    "./app": {
+      "types": "./dist/zentto-studio-app.d.ts",
+      "import": "./dist/zentto-studio-app.js"
+    },
+    "./wizard": {
+      "types": "./dist/designer/zs-app-wizard.d.ts",
+      "import": "./dist/designer/zs-app-wizard.js"
+    },
+    "./page-designer": {
+      "types": "./dist/designer/zs-page-designer.d.ts",
+      "import": "./dist/designer/zs-page-designer.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@zentto/studio-core": "*",
+    "lit": "^3.2.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zentto-erp/zentto-studio"
+  },
+  "keywords": [
+    "zentto",
+    "studio",
+    "web-component",
+    "form-builder",
+    "lit",
+    "runtime-ui"
+  ]
+}

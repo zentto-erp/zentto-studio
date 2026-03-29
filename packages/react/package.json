@@ -1,0 +1,47 @@
+{
+  "name": "@zentto/studio-react",
+  "version": "0.5.2",
+  "description": "React wrapper for Zentto Studio web components — <ZenttoStudioRenderer> and <ZenttoStudioDesigner>.",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@zentto/studio": "*",
+    "@zentto/studio-core": "*",
+    "@lit/react": "^1.0.0"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zentto-erp/zentto-studio"
+  },
+  "keywords": [
+    "zentto",
+    "studio",
+    "react",
+    "form-builder",
+    "dynamic-forms"
+  ]
+}

@@ -1,0 +1,72 @@
+name: Publish to npm
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (e.g. 0.2.0)'
+        required: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org
+
+      - run: npm ci
+      - run: npx turbo build
+      - run: npx turbo test
+
+      # Publish to npm
+      - name: Publish @zentto/studio-core
+        run: cd packages/core && npm publish --access public || echo "Already published"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @zentto/studio
+        run: cd packages/web-component && npm publish --access public || echo "Already published"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @zentto/studio-react
+        run: cd packages/react && npm publish --access public || echo "Already published"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # Publish to GitHub Packages
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://npm.pkg.github.com
+          scope: '@zentto-erp'
+
+      - name: Publish to GitHub Packages
+        run: |
+          for pkg in packages/core packages/web-component packages/react; do
+            cd $pkg
+            # Rewrite scope for GitHub Packages
+            sed -i 's/@zentto\//@zentto-erp\//g' package.json
+            npm publish --access public || echo "Already published"
+            git checkout package.json
+            cd ../..
+          done
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Create git tag
+      - name: Create Release Tag
+        run: |
+          VERSION=$(node -p "require('./packages/core/package.json').version")
+          git tag "v${VERSION}" || true
+          git push origin "v${VERSION}" || true

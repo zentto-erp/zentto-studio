@@ -1,0 +1,58 @@
+@* Example: Zentto Studio in .NET Blazor *@
+@* Add to _Host.cshtml or index.html: *@
+@* <script type="module" src="https://unpkg.com/@zentto/studio@latest/dist/zentto-studio-renderer.js"></script> *@
+
+@page "/studio-form"
+@inject IJSRuntime JSRuntime
+
+<h1>Zentto Studio — Blazor</h1>
+
+<div id="blazor-form-container">
+    <zentto-studio-renderer id="blazor-form"></zentto-studio-renderer>
+</div>
+
+@if (!string.IsNullOrEmpty(SubmittedJson))
+{
+    <pre style="margin-top: 16px; padding: 16px; background: #1e1e2d; color: #a2a3b7; border-radius: 8px;">
+        @SubmittedJson
+    </pre>
+}
+
+@code {
+    private string SubmittedJson = "";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JSRuntime.InvokeVoidAsync("initStudioForm");
+        }
+    }
+}
+
+@* Add this script to your _Host.cshtml or create a .js file: *@
+@*
+<script>
+  window.initStudioForm = function() {
+    const form = document.getElementById('blazor-form');
+    form.schema = {
+      id: 'blazor-demo', version: '1.0', title: 'Contact',
+      layout: { type: 'grid', columns: 2, gap: 16 },
+      sections: [{
+        id: 'main', title: 'Contact',
+        fields: [
+          { id: 'name', type: 'text', field: 'name', label: 'Name', required: true },
+          { id: 'email', type: 'email', field: 'email', label: 'Email', required: true },
+          { id: 'message', type: 'textarea', field: 'message', label: 'Message', colSpan: 2 },
+        ]
+      }],
+      actions: [{ id: 'send', type: 'submit', label: 'Send', variant: 'primary' }]
+    };
+
+    form.addEventListener('studio-submit', function(e) {
+      // Call Blazor from JS
+      DotNet.invokeMethodAsync('YourApp', 'OnFormSubmit', JSON.stringify(e.detail.data));
+    });
+  };
+</script>
+*@

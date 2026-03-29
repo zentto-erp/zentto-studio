@@ -1,0 +1,39 @@
+name: Publish Beta
+
+on:
+  push:
+    branches: [developer]
+
+jobs:
+  publish-beta:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org
+
+      - run: npm ci
+      - run: npx turbo build
+      - run: npx turbo test
+
+      - name: Compute beta version
+        id: version
+        run: |
+          BASE=$(node -p "require('./packages/core/package.json').version")
+          COUNT=$(npm view @zentto/studio-core versions --json 2>/dev/null | grep -c "beta" || echo "0")
+          BETA="${BASE}-beta.${COUNT}"
+          echo "version=${BETA}" >> $GITHUB_OUTPUT
+
+      - name: Publish beta packages
+        run: |
+          BETA=${{ steps.version.outputs.version }}
+          for pkg in packages/core packages/web-component packages/react; do
+            cd $pkg
+            npm version ${BETA} --no-git-tag-version
+            npm publish --tag beta --access public || echo "Already published"
+            cd ../..
+          done
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
