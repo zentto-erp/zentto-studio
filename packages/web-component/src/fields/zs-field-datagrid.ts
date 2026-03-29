@@ -299,6 +299,7 @@ export class ZsFieldDatagrid extends LitElement {
           ?enablePagination="${this.enablePagination}"
           ?enableHeaderFilters="${this.enableHeaderFilters}"
           ?enableExport="${this.enableExport}"
+          enable-configurator
           @row-click="${this.handleRowClick}"
           @selection-change="${this.handleSelectionChange}"
         ></zentto-grid>
