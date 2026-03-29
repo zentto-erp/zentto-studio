@@ -1522,6 +1522,420 @@ export class ZsPageDesigner extends LitElement {
             ` : ''}
           ` : ''}
         </div>
+
+        <!-- Type-specific props -->
+        ${this.renderTypeSpecificProps(field)}
+      </div>
+    `;
+  }
+
+  // ─── Type-Specific Property Panels ────────────────
+
+  private renderTypeSpecificProps(field: FieldConfig) {
+    switch (field.type) {
+      case 'datagrid': return this.renderDataGridProps(field);
+      case 'chart': return this.renderChartProps(field);
+      case 'report': return this.renderReportProps(field);
+      case 'select': case 'multiselect': case 'radio': return this.renderSelectProps(field);
+      case 'number': case 'currency': case 'percentage': case 'slider': case 'rating': return this.renderNumberProps(field);
+      case 'lookup': return this.renderLookupProps(field);
+      case 'chips': case 'tags': return this.renderChipsProps(field);
+      case 'treeview': return this.renderTreeViewProps(field);
+      case 'date': case 'time': case 'datetime': return this.renderDateProps(field);
+      case 'file': case 'image': return this.renderFileProps(field);
+      case 'signature': return this.renderSignatureProps(field);
+      default: return nothing;
+    }
+  }
+
+  private setProp(field: FieldConfig, key: string, value: unknown) {
+    if (!field.props) field.props = {};
+    field.props[key] = value;
+    this.commitChange();
+  }
+
+  // ─── DataGrid Props ───────────────────────────────
+
+  @state() private gridConfigModalOpen = false;
+
+  private renderDataGridProps(field: FieldConfig) {
+    const p = field.props ?? {};
+    return html`
+      <div class="prop-section">
+        <div class="prop-section-header" data-section="layout" @click="${() => this.toggleSection('grid-config')}">
+          <span class="collapse-icon ${this.collapsedSections.has('grid-config') ? 'collapse-icon--collapsed' : ''}">▾</span>
+          <h4>DataGrid Config</h4>
+        </div>
+        ${!this.collapsedSections.has('grid-config') ? html`
+          <div class="prop-info">◫ Configuracion de zentto-grid</div>
+
+          <!-- Open full grid configurator -->
+          <button style="width:100%;padding:8px;margin-bottom:8px;border:1px solid #1976d2;border-radius:6px;background:#e3f2fd;color:#1976d2;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;transition:all 0.15s;"
+            @click="${() => { this.gridConfigModalOpen = true; }}"
+          >◫ Abrir Configurador de Grid</button>
+
+          ${this.gridConfigModalOpen ? this.renderGridConfigModal(field) : ''}
+          <div class="prop-row"><span class="prop-label">Altura</span><input class="prop-input" .value="${(p.height as string) ?? '400px'}" placeholder="400px" @change="${(e: Event) => this.setProp(field, 'height', (e.target as HTMLInputElement).value)}" /></div>
+          <div class="prop-row"><span class="prop-label">Page Size</span><input class="prop-input" type="number" min="5" .value="${String(p.pageSize ?? 25)}" @change="${(e: Event) => this.setProp(field, 'pageSize', parseInt((e.target as HTMLInputElement).value) || 25)}" /></div>
+          <div class="prop-row"><span class="prop-label">Densidad</span>
+            <select class="prop-input" .value="${(p.density as string) ?? 'compact'}" @change="${(e: Event) => this.setProp(field, 'density', (e.target as HTMLSelectElement).value)}">
+              <option value="compact">Compacta</option>
+              <option value="standard">Estandar</option>
+              <option value="comfortable">Comoda</option>
+            </select>
+          </div>
+          <div class="prop-row"><span class="prop-label">Row Click</span>
+            <select class="prop-input" .value="${(p.onRowClick as string) ?? 'emit'}" @change="${(e: Event) => this.setProp(field, 'onRowClick', (e.target as HTMLSelectElement).value)}">
+              <option value="emit">Emitir evento</option>
+              <option value="navigate">Navegar</option>
+              <option value="select">Seleccionar</option>
+              <option value="detail">Detalle</option>
+            </select>
+          </div>
+          ${(p.onRowClick as string) === 'navigate' ? html`
+            <div class="prop-row"><span class="prop-label">Nav Segment</span><input class="prop-input" .value="${(p.rowClickSegment as string) ?? ''}" placeholder="/clientes/{id}" @change="${(e: Event) => this.setProp(field, 'rowClickSegment', (e.target as HTMLInputElement).value)}" /></div>
+          ` : ''}
+          <div class="prop-divider"></div>
+          ${this.renderToggle('Toolbar', (p.enableToolbar as boolean) ?? true, (v) => this.setProp(field, 'enableToolbar', v))}
+          ${this.renderToggle('Busqueda', (p.enableSearch as boolean) ?? true, (v) => this.setProp(field, 'enableSearch', v))}
+          ${this.renderToggle('Exportar', (p.enableExport as boolean) ?? false, (v) => this.setProp(field, 'enableExport', v))}
+          ${this.renderToggle('Paginacion', (p.enablePagination as boolean) ?? true, (v) => this.setProp(field, 'enablePagination', v))}
+          ${this.renderToggle('Filtros Header', (p.enableHeaderFilters as boolean) ?? false, (v) => this.setProp(field, 'enableHeaderFilters', v))}
+          ${this.renderToggle('Clipboard', (p.enableClipboard as boolean) ?? false, (v) => this.setProp(field, 'enableClipboard', v))}
+          ${this.renderToggle('Seleccion Filas', (p.enableRowSelection as boolean) ?? false, (v) => this.setProp(field, 'enableRowSelection', v))}
+          ${this.renderToggle('Master-Detail', (p.enableMasterDetail as boolean) ?? false, (v) => this.setProp(field, 'enableMasterDetail', v))}
+          ${this.renderToggle('Totales', (p.showTotals as boolean) ?? false, (v) => this.setProp(field, 'showTotals', v))}
+          ${this.renderToggle('Context Menu', (p.enableContextMenu as boolean) ?? false, (v) => this.setProp(field, 'enableContextMenu', v))}
+          ${this.renderToggle('Find (Ctrl+F)', (p.enableFind as boolean) ?? false, (v) => this.setProp(field, 'enableFind', v))}
+          ${this.renderToggle('Status Bar', (p.enableStatusBar as boolean) ?? false, (v) => this.setProp(field, 'enableStatusBar', v))}
+          ${this.renderToggle('Filter Panel', (p.enableFilterPanel as boolean) ?? false, (v) => this.setProp(field, 'enableFilterPanel', v))}
+          <div class="prop-divider"></div>
+          <div class="prop-row"><span class="prop-label">Moneda</span><input class="prop-input" .value="${(p.defaultCurrency as string) ?? ''}" placeholder="USD, VES, EUR..." @change="${(e: Event) => this.setProp(field, 'defaultCurrency', (e.target as HTMLInputElement).value)}" /></div>
+          <div class="prop-row"><span class="prop-label">Archivo Export</span><input class="prop-input" .value="${(p.exportFilename as string) ?? ''}" placeholder="clientes" @change="${(e: Event) => this.setProp(field, 'exportFilename', (e.target as HTMLInputElement).value)}" /></div>
+          <div class="prop-row"><span class="prop-label">Grid ID</span><input class="prop-input" style="font-family:'SF Mono','Consolas',monospace;font-size:10px;" .value="${(p.gridId as string) ?? ''}" placeholder="clientes-grid" @change="${(e: Event) => this.setProp(field, 'gridId', (e.target as HTMLInputElement).value)}" /></div>
+        ` : ''}
+      </div>
+    `;
+  }
+
+  // ─── Chart Props ──────────────────────────────────
+
+  private renderChartProps(field: FieldConfig) {
+    const p = field.props ?? {};
+    return html`
+      <div class="prop-section">
+        <div class="prop-section-header" data-section="layout" @click="${() => this.toggleSection('chart-config')}">
+          <span class="collapse-icon ${this.collapsedSections.has('chart-config') ? 'collapse-icon--collapsed' : ''}">▾</span>
+          <h4>Chart Config</h4>
+        </div>
+        ${!this.collapsedSections.has('chart-config') ? html`
+          <div class="prop-info">📊 Configuracion del grafico SVG</div>
+          <div class="prop-row"><span class="prop-label">Tipo</span>
+            <select class="prop-input" .value="${(p.chartType as string) ?? 'bar'}" @change="${(e: Event) => this.setProp(field, 'chartType', (e.target as HTMLSelectElement).value)}">
+              <option value="bar">Barras</option>
+              <option value="line">Lineas</option>
+              <option value="pie">Torta</option>
+              <option value="donut">Donut</option>
+              <option value="area">Area</option>
+            </select>
+          </div>
+          <div class="prop-row"><span class="prop-label">Titulo</span><input class="prop-input" .value="${(p.chartTitle as string) ?? ''}" placeholder="Ventas por Mes" @change="${(e: Event) => this.setProp(field, 'chartTitle', (e.target as HTMLInputElement).value)}" /></div>
+          <div class="prop-row"><span class="prop-label">Label Field</span><input class="prop-input" .value="${(p.labelField as string) ?? ''}" placeholder="mes" @change="${(e: Event) => this.setProp(field, 'labelField', (e.target as HTMLInputElement).value)}" /></div>
+          <div class="prop-row"><span class="prop-label">Value Field</span><input class="prop-input" .value="${(p.valueField as string) ?? ''}" placeholder="total" @change="${(e: Event) => this.setProp(field, 'valueField', (e.target as HTMLInputElement).value)}" /></div>
+          <div class="prop-divider"></div>
+          <div class="prop-pos-grid">
+            <div class="prop-pos-cell">
+              <span class="prop-pos-label prop-pos-label--w">W</span>
+              <input type="number" min="100" .value="${String(p.width ?? 400)}" @change="${(e: Event) => this.setProp(field, 'width', parseInt((e.target as HTMLInputElement).value) || 400)}" />
+            </div>
+            <div class="prop-pos-cell">
+              <span class="prop-pos-label prop-pos-label--h">H</span>
+              <input type="number" min="100" .value="${String(p.height ?? 250)}" @change="${(e: Event) => this.setProp(field, 'height', parseInt((e.target as HTMLInputElement).value) || 250)}" />
+            </div>
+          </div>
+          <div class="prop-divider"></div>
+          ${this.renderToggle('Leyenda', (p.showLegend as boolean) ?? true, (v) => this.setProp(field, 'showLegend', v))}
+          ${this.renderToggle('Animacion', (p.animated as boolean) ?? false, (v) => this.setProp(field, 'animated', v))}
+        ` : ''}
+      </div>
+    `;
+  }
+
+  // ─── Report Props ─────────────────────────────────
+
+  private renderReportProps(field: FieldConfig) {
+    const p = field.props ?? {};
+    return html`
+      <div class="prop-section">
+        <div class="prop-section-header" data-section="layout" @click="${() => this.toggleSection('report-config')}">
+          <span class="collapse-icon ${this.collapsedSections.has('report-config') ? 'collapse-icon--collapsed' : ''}">▾</span>
+          <h4>Report Config</h4>
+        </div>
+        ${!this.collapsedSections.has('report-config') ? html`
+          <div class="prop-info">📋 Configuracion de zentto-report</div>
+          <div class="prop-row"><span class="prop-label">Template ID</span><input class="prop-input" .value="${(p.templateId as string) ?? ''}" placeholder="invoice-template" @change="${(e: Event) => this.setProp(field, 'templateId', (e.target as HTMLInputElement).value)}" /></div>
+          <div class="prop-row"><span class="prop-label">Zoom</span><input class="prop-input" type="number" min="25" max="300" step="25" .value="${String(p.zoom ?? 100)}" @change="${(e: Event) => this.setProp(field, 'zoom', parseInt((e.target as HTMLInputElement).value) || 100)}" /></div>
+          <div class="prop-row"><span class="prop-label">Altura</span><input class="prop-input" .value="${(p.height as string) ?? '500px'}" placeholder="500px" @change="${(e: Event) => this.setProp(field, 'height', (e.target as HTMLInputElement).value)}" /></div>
+          <div class="prop-divider"></div>
+          ${this.renderToggle('Toolbar', (p.showToolbar as boolean) ?? true, (v) => this.setProp(field, 'showToolbar', v))}
+          ${this.renderToggle('Imprimir', (p.showPrint as boolean) ?? true, (v) => this.setProp(field, 'showPrint', v))}
+          ${this.renderToggle('Exportar PDF', (p.showExportPdf as boolean) ?? true, (v) => this.setProp(field, 'showExportPdf', v))}
+          ${this.renderToggle('Navegacion', (p.showNavigation as boolean) ?? true, (v) => this.setProp(field, 'showNavigation', v))}
+        ` : ''}
+      </div>
+    `;
+  }
+
+  // ─── Select/Radio Props ───────────────────────────
+
+  private renderSelectProps(field: FieldConfig) {
+    const p = field.props ?? {};
+    const options = (p.options as { value: string; label: string }[]) ?? [];
+    return html`
+      <div class="prop-section">
+        <div class="prop-section-header" data-section="layout" @click="${() => this.toggleSection('select-config')}">
+          <span class="collapse-icon ${this.collapsedSections.has('select-config') ? 'collapse-icon--collapsed' : ''}">▾</span>
+          <h4>Opciones</h4>
+        </div>
+        ${!this.collapsedSections.has('select-config') ? html`
+          ${options.map((opt, i) => html`
+            <div style="display:flex;gap:3px;margin-bottom:3px;align-items:center;">
+              <input class="prop-input" style="flex:1;" .value="${opt.value}" placeholder="valor" @change="${(e: Event) => { options[i].value = (e.target as HTMLInputElement).value; this.setProp(field, 'options', [...options]); }}" />
+              <input class="prop-input" style="flex:1;" .value="${opt.label}" placeholder="label" @change="${(e: Event) => { options[i].label = (e.target as HTMLInputElement).value; this.setProp(field, 'options', [...options]); }}" />
+              <button style="border:none;background:none;cursor:pointer;color:#d32f2f;font-size:12px;padding:2px 4px;" @click="${() => { options.splice(i, 1); this.setProp(field, 'options', [...options]); }}">✕</button>
+            </div>
+          `)}
+          <button style="width:100%;padding:4px;border:1px dashed #ccc;border-radius:4px;background:none;cursor:pointer;font-size:10px;color:#888;font-family:inherit;margin-top:4px;"
+            @click="${() => { options.push({ value: '', label: '' }); this.setProp(field, 'options', [...options]); }}"
+          >+ Agregar opcion</button>
+          ${field.type === 'radio' ? html`
+            <div class="prop-divider"></div>
+            ${this.renderToggle('Horizontal', (p.horizontal as boolean) ?? false, (v) => this.setProp(field, 'horizontal', v))}
+          ` : ''}
+          ${field.type === 'multiselect' ? html`
+            <div class="prop-divider"></div>
+            ${this.renderToggle('Multiple', true, () => {})}
+          ` : ''}
+        ` : ''}
+      </div>
+    `;
+  }
+
+  // ─── Number/Currency/Slider/Rating Props ──────────
+
+  private renderNumberProps(field: FieldConfig) {
+    const p = field.props ?? {};
+    return html`
+      <div class="prop-section">
+        <div class="prop-section-header" data-section="layout" @click="${() => this.toggleSection('number-config')}">
+          <span class="collapse-icon ${this.collapsedSections.has('number-config') ? 'collapse-icon--collapsed' : ''}">▾</span>
+          <h4>Numero Config</h4>
+        </div>
+        ${!this.collapsedSections.has('number-config') ? html`
+          ${field.type === 'currency' ? html`
+            <div class="prop-row"><span class="prop-label">Simbolo</span><input class="prop-input" .value="${(p.currencySymbol as string) ?? '$'}" @change="${(e: Event) => this.setProp(field, 'currencySymbol', (e.target as HTMLInputElement).value)}" /></div>
+          ` : ''}
+          ${field.type === 'slider' || field.type === 'rating' ? html`
+            <div class="prop-pos-grid">
+              <div class="prop-pos-cell">
+                <span class="prop-pos-label prop-pos-label--x">Min</span>
+                <input type="number" .value="${String(p.min ?? 0)}" @change="${(e: Event) => this.setProp(field, 'min', parseInt((e.target as HTMLInputElement).value) || 0)}" />
+              </div>
+              <div class="prop-pos-cell">
+                <span class="prop-pos-label prop-pos-label--y">Max</span>
+                <input type="number" .value="${String(p.max ?? (field.type === 'rating' ? 5 : 100))}" @change="${(e: Event) => this.setProp(field, 'max', parseInt((e.target as HTMLInputElement).value) || 100)}" />
+              </div>
+            </div>
+            ${field.type === 'slider' ? html`
+              <div class="prop-row"><span class="prop-label">Step</span><input class="prop-input" type="number" min="1" .value="${String(p.step ?? 1)}" @change="${(e: Event) => this.setProp(field, 'step', parseInt((e.target as HTMLInputElement).value) || 1)}" /></div>
+            ` : ''}
+            ${field.type === 'rating' ? html`
+              <div class="prop-row"><span class="prop-label">Estrellas</span><input class="prop-input" type="number" min="3" max="10" .value="${String(p.maxRating ?? 5)}" @change="${(e: Event) => this.setProp(field, 'maxRating', parseInt((e.target as HTMLInputElement).value) || 5)}" /></div>
+            ` : ''}
+          ` : ''}
+        ` : ''}
+      </div>
+    `;
+  }
+
+  // ─── Lookup Props ─────────────────────────────────
+
+  private renderLookupProps(field: FieldConfig) {
+    const p = field.props ?? {};
+    return html`
+      <div class="prop-section">
+        <div class="prop-section-header" data-section="layout" @click="${() => this.toggleSection('lookup-config')}">
+          <span class="collapse-icon ${this.collapsedSections.has('lookup-config') ? 'collapse-icon--collapsed' : ''}">▾</span>
+          <h4>Lookup Config</h4>
+        </div>
+        ${!this.collapsedSections.has('lookup-config') ? html`
+          <div class="prop-row"><span class="prop-label">Min Chars</span><input class="prop-input" type="number" min="1" .value="${String(p.minChars ?? 2)}" @change="${(e: Event) => this.setProp(field, 'minChars', parseInt((e.target as HTMLInputElement).value) || 2)}" /></div>
+          <div class="prop-row"><span class="prop-label">Debounce</span><input class="prop-input" type="number" min="100" step="100" .value="${String(p.debounceMs ?? 300)}" @change="${(e: Event) => this.setProp(field, 'debounceMs', parseInt((e.target as HTMLInputElement).value) || 300)}" /></div>
+        ` : ''}
+      </div>
+    `;
+  }
+
+  // ─── Chips/Tags Props ─────────────────────────────
+
+  private renderChipsProps(field: FieldConfig) {
+    const p = field.props ?? {};
+    return html`
+      <div class="prop-section">
+        <div class="prop-section-header" data-section="layout" @click="${() => this.toggleSection('chips-config')}">
+          <span class="collapse-icon ${this.collapsedSections.has('chips-config') ? 'collapse-icon--collapsed' : ''}">▾</span>
+          <h4>Chips Config</h4>
+        </div>
+        ${!this.collapsedSections.has('chips-config') ? html`
+          <div class="prop-row"><span class="prop-label">Max Chips</span><input class="prop-input" type="number" min="0" .value="${String(p.maxChips ?? 0)}" @change="${(e: Event) => this.setProp(field, 'maxChips', parseInt((e.target as HTMLInputElement).value) || 0)}" /></div>
+          <div class="prop-row"><span class="prop-label">Color Mode</span>
+            <select class="prop-input" .value="${(p.colorMode as string) ?? 'default'}" @change="${(e: Event) => this.setProp(field, 'colorMode', (e.target as HTMLSelectElement).value)}">
+              <option value="default">Default</option>
+              <option value="primary">Primary</option>
+              <option value="success">Success</option>
+              <option value="auto">Auto (ciclo)</option>
+            </select>
+          </div>
+          ${this.renderToggle('Permitir custom', (p.allowCustom as boolean) ?? true, (v) => this.setProp(field, 'allowCustom', v))}
+          ${this.renderSelectProps(field)}
+        ` : ''}
+      </div>
+    `;
+  }
+
+  // ─── TreeView Props ───────────────────────────────
+
+  private renderTreeViewProps(field: FieldConfig) {
+    const p = field.props ?? {};
+    return html`
+      <div class="prop-section">
+        <div class="prop-section-header" data-section="layout" @click="${() => this.toggleSection('tree-config')}">
+          <span class="collapse-icon ${this.collapsedSections.has('tree-config') ? 'collapse-icon--collapsed' : ''}">▾</span>
+          <h4>TreeView Config</h4>
+        </div>
+        ${!this.collapsedSections.has('tree-config') ? html`
+          ${this.renderToggle('Multi-select', (p.multiSelect as boolean) ?? false, (v) => this.setProp(field, 'multiSelect', v))}
+          ${this.renderToggle('Checkboxes', (p.showCheckboxes as boolean) ?? false, (v) => this.setProp(field, 'showCheckboxes', v))}
+          ${this.renderToggle('Buscador', (p.searchable as boolean) ?? false, (v) => this.setProp(field, 'searchable', v))}
+        ` : ''}
+      </div>
+    `;
+  }
+
+  // ─── Date Props ───────────────────────────────────
+
+  private renderDateProps(field: FieldConfig) {
+    const p = field.props ?? {};
+    return html`
+      <div class="prop-section">
+        <div class="prop-section-header" data-section="layout" @click="${() => this.toggleSection('date-config')}">
+          <span class="collapse-icon ${this.collapsedSections.has('date-config') ? 'collapse-icon--collapsed' : ''}">▾</span>
+          <h4>Fecha Config</h4>
+        </div>
+        ${!this.collapsedSections.has('date-config') ? html`
+          <div class="prop-row"><span class="prop-label">Modo</span>
+            <select class="prop-input" .value="${(p.mode as string) ?? 'date'}" @change="${(e: Event) => this.setProp(field, 'mode', (e.target as HTMLSelectElement).value)}">
+              <option value="date">Fecha</option>
+              <option value="time">Hora</option>
+              <option value="datetime">Fecha y Hora</option>
+            </select>
+          </div>
+          <div class="prop-row"><span class="prop-label">Min</span><input class="prop-input" type="date" .value="${(p.min as string) ?? ''}" @change="${(e: Event) => this.setProp(field, 'min', (e.target as HTMLInputElement).value)}" /></div>
+          <div class="prop-row"><span class="prop-label">Max</span><input class="prop-input" type="date" .value="${(p.max as string) ?? ''}" @change="${(e: Event) => this.setProp(field, 'max', (e.target as HTMLInputElement).value)}" /></div>
+        ` : ''}
+      </div>
+    `;
+  }
+
+  // ─── File/Image Props ─────────────────────────────
+
+  private renderFileProps(field: FieldConfig) {
+    const p = field.props ?? {};
+    return html`
+      <div class="prop-section">
+        <div class="prop-section-header" data-section="layout" @click="${() => this.toggleSection('file-config')}">
+          <span class="collapse-icon ${this.collapsedSections.has('file-config') ? 'collapse-icon--collapsed' : ''}">▾</span>
+          <h4>Archivo Config</h4>
+        </div>
+        ${!this.collapsedSections.has('file-config') ? html`
+          <div class="prop-row"><span class="prop-label">Accept</span><input class="prop-input" .value="${(p.accept as string) ?? ''}" placeholder="image/*,.pdf" @change="${(e: Event) => this.setProp(field, 'accept', (e.target as HTMLInputElement).value)}" /></div>
+          ${this.renderToggle('Multiple', (p.multiple as boolean) ?? false, (v) => this.setProp(field, 'multiple', v))}
+        ` : ''}
+      </div>
+    `;
+  }
+
+  // ─── Signature Props ──────────────────────────────
+
+  private renderSignatureProps(field: FieldConfig) {
+    const p = field.props ?? {};
+    return html`
+      <div class="prop-section">
+        <div class="prop-section-header" data-section="layout" @click="${() => this.toggleSection('sig-config')}">
+          <span class="collapse-icon ${this.collapsedSections.has('sig-config') ? 'collapse-icon--collapsed' : ''}">▾</span>
+          <h4>Firma Config</h4>
+        </div>
+        ${!this.collapsedSections.has('sig-config') ? html`
+          <div class="prop-row"><span class="prop-label">Grosor</span><input class="prop-input" type="number" min="1" max="10" .value="${String(p.penWidth ?? 2)}" @change="${(e: Event) => this.setProp(field, 'penWidth', parseInt((e.target as HTMLInputElement).value) || 2)}" /></div>
+          <div class="prop-row"><span class="prop-label">Color</span><input class="prop-input" type="color" .value="${(p.penColor as string) ?? '#000000'}" @change="${(e: Event) => this.setProp(field, 'penColor', (e.target as HTMLInputElement).value)}" /></div>
+        ` : ''}
+      </div>
+    `;
+  }
+
+  // ─── Grid Configurator Modal ────────────────────
+
+  private renderGridConfigModal(field: FieldConfig) {
+    const p = field.props ?? {};
+    const endpoint = (p.endpoint as string) ?? '';
+
+    return html`
+      <div style="position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.5);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;"
+        @click="${(e: Event) => { if (e.target === e.currentTarget) this.gridConfigModalOpen = false; }}"
+      >
+        <div style="background:white;border-radius:12px;width:90vw;max-width:1200px;height:80vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.3);overflow:hidden;"
+          @click="${(e: Event) => e.stopPropagation()}"
+        >
+          <!-- Header -->
+          <div style="padding:14px 20px;border-bottom:1px solid #eee;display:flex;align-items:center;gap:12px;">
+            <span style="font-size:18px;">◫</span>
+            <div style="flex:1;">
+              <div style="font-size:15px;font-weight:600;color:#333;">Configurador de Grid</div>
+              <div style="font-size:11px;color:#999;">Usa el configurador nativo del grid para ajustar columnas, orden, ancho y visibilidad</div>
+            </div>
+            <button style="border:none;background:none;font-size:20px;cursor:pointer;color:#999;padding:4px 8px;"
+              @click="${() => { this.gridConfigModalOpen = false; }}"
+            >✕</button>
+          </div>
+
+          <!-- Grid con configurador activo -->
+          <div style="flex:1;overflow:hidden;padding:16px;">
+            <zs-field-datagrid
+              .config="${{ ...field, props: { ...p, enableToolbar: true, enableSearch: true, enableExport: true, enableHeaderFilters: true, enablePagination: true } }}"
+              .endpoint="${endpoint}"
+              .authToken="${this.apiToken}"
+              .authHeaders="${this.apiToken ? { 'Authorization': 'Bearer ' + this.apiToken, ...(this.apiCompany ? { 'x-empresa': this.apiCompany } : {}), ...(this.apiBranch ? { 'x-sucursal': this.apiBranch } : {}) } : {}}"
+              .designMode="${true}"
+              .theme="${'light'}"
+              style="display:block;height:100%;"
+            ></zs-field-datagrid>
+          </div>
+
+          <!-- Footer -->
+          <div style="padding:12px 20px;border-top:1px solid #eee;display:flex;gap:8px;justify-content:space-between;background:#fafafa;">
+            <div style="font-size:11px;color:#999;display:flex;align-items:center;gap:6px;">
+              <span>💡</span> Usa el icono ⚙ del grid para abrir el configurador de columnas
+            </div>
+            <div style="display:flex;gap:8px;">
+              <button style="padding:8px 16px;border:1px solid #ddd;border-radius:6px;background:white;cursor:pointer;font-size:13px;font-family:inherit;"
+                @click="${() => { this.gridConfigModalOpen = false; }}"
+              >Cerrar</button>
+              <button style="padding:8px 16px;border:none;border-radius:6px;background:#1976d2;color:white;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;"
+                @click="${() => { this.gridConfigModalOpen = false; this.commitChange(); }}"
+              >Guardar Configuracion</button>
+            </div>
+          </div>
+        </div>
       </div>
     `;
   }

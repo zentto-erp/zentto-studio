@@ -134,6 +134,7 @@ export class ZsFieldDatagrid extends LitElement {
   @property({ type: String }) endpoint = '';
   @property({ type: String }) authToken = '';
   @property({ type: Object }) authHeaders: Record<string, string> = {};
+  @property({ type: Boolean }) designMode = false; // enables configurator + emits column changes
 
   @state() private fetchedRows: unknown[] = [];
   @state() private autoColumns: ColumnDef[] = [];
@@ -294,11 +295,24 @@ export class ZsFieldDatagrid extends LitElement {
           .theme="${this.theme}"
           .density="${this.density}"
           .pageSize="${this.pageSize}"
-          ?enableToolbar="${this.enableToolbar}"
-          ?enableSearch="${this.enableSearch}"
-          ?enablePagination="${this.enablePagination}"
-          ?enableHeaderFilters="${this.enableHeaderFilters}"
-          ?enableExport="${this.enableExport}"
+          ?enable-toolbar="${this.enableToolbar}"
+          ?enable-search="${this.enableSearch}"
+          ?enable-pagination="${this.enablePagination}"
+          ?enable-header-filters="${this.enableHeaderFilters}"
+          ?enable-export="${this.enableExport}"
+          ?enable-configurator="${this.designMode}"
+          ?enable-clipboard="${(this.config?.props?.enableClipboard as boolean) ?? false}"
+          ?enable-row-selection="${(this.config?.props?.enableRowSelection as boolean) ?? false}"
+          ?enable-master-detail="${(this.config?.props?.enableMasterDetail as boolean) ?? false}"
+          ?show-totals="${(this.config?.props?.showTotals as boolean) ?? false}"
+          ?enable-context-menu="${this.designMode}"
+          ?enable-header-menu="${this.designMode}"
+          ?enable-find="${this.designMode}"
+          ?enable-quick-search="${this.enableSearch}"
+          ?enable-status-bar="${this.designMode}"
+          default-currency="${(this.config?.props?.defaultCurrency as string) ?? ''}"
+          export-filename="${(this.config?.props?.exportFilename as string) ?? 'export'}"
+          height="${this.gridHeight}"
           @row-click="${this.handleRowClick}"
           @selection-change="${this.handleSelectionChange}"
         ></zentto-grid>

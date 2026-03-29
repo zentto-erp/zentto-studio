@@ -169,12 +169,19 @@ npm install @zentto/studio-core@X.Y.Z @zentto/studio@X.Y.Z @zentto/studio-react@
 rm -rf apps/lab/.next node_modules/.cache
 ```
 
-## Lo que falta (Fase 2)
+## Lo que falta (Fase 2) — PRIORIDAD
 
-1. **Persistencia en @zentto/cache** — Templates y schemas del designer se guardan/leen de cache.zentto.net en vez de hardcoded
-2. **Drag-drop real con InteractJS** — Mover campos libremente en canvas (como report-designer)
-3. **Integración zentto-grid dentro del designer** — Campo datagrid que embebe <zentto-grid> real con columns config
-4. **Integración zentto-report-viewer** — Campo report que embebe el viewer real
+### ALTA PRIORIDAD
+1. **Props completas por tipo de campo en el designer** — Cuando seleccionas un datagrid/chart/report en el canvas, el panel de propiedades debe mostrar TODAS las opciones configurables de ese componente:
+   - **DataGrid**: columns (add/remove/reorder), enableToolbar, enableSearch, enableExport, enablePagination, pageSize, height, density, enableHeaderFilters, onRowClick, rowClickSegment, endpoint, dataSourceId
+   - **Chart**: chartType (bar/line/pie/donut/area), dataSourceId, labelField, valueFields, colors, height, width, title, showLegend
+   - **Report**: templateId, dataSourceId, showToolbar, zoom, layout JSON
+   - Cada tipo de campo debe tener su sección de props específica (como Figma muestra props diferentes por tipo de componente)
+2. **Persistencia en @zentto/cache** — Templates y schemas del designer se guardan/leen de cache.zentto.net
+3. **Auth lockout en BD** — PR #56 pendiente de merge (migración 00039 + endpoint /v1/auth/unlock)
+
+### MEDIA PRIORIDAD
+4. **Drag-drop real con InteractJS** — Mover campos libremente en canvas (como report-designer)
 5. **Provider completo con MUI icons** — resolveIcon que mapea nombres MUI a SVG
 6. **Wizard amigable para usuarios finales** — Más pasos, preview en cada paso
 7. **Exportar a código** — Generar componente React/Next.js desde el schema
