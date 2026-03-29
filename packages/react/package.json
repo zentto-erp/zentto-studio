@@ -1,6 +1,6 @@
 {
   "name": "@zentto/studio-react",
-  "version": "0.9.4",
+  "version": "0.9.5",
   "description": "React wrapper for Zentto Studio web components — <ZenttoStudioRenderer> and <ZenttoStudioDesigner>.",
   "type": "module",
   "main": "dist/index.js",
