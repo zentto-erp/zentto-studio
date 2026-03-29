@@ -1372,11 +1372,11 @@ export class ZsPageDesigner extends LitElement {
     return '';
   }
 
-  private getPreviewContent(field: FieldConfig): string {
+  private getPreviewContent(field: FieldConfig): TemplateResult | string {
     if (field.type === 'switch') return '⬤───────';
     if (field.type === 'separator') return '';
     if (field.type === 'heading') return field.label ?? 'Titulo';
-    if (field.type === 'datagrid') return '◫ ZenttoDataGrid';
+    if (field.type === 'datagrid') return this.renderLiveDataGrid(field);
     if (field.type === 'report') return '◫ ZenttoReportViewer';
     if (field.type === 'chart') return '◫ Chart SVG';
     if (field.type === 'checkbox' || field.type === 'radio') return '☐ ' + (field.label ?? '');
@@ -1387,6 +1387,23 @@ export class ZsPageDesigner extends LitElement {
     if (field.type === 'chips' || field.type === 'tags') return '🏷 tag1 × tag2 ×';
     if (field.type === 'treeview') return '▸ Nodo 1\n  ▸ Nodo 2';
     return field.placeholder ?? field.type;
+  }
+
+  /** Render live datagrid inside canvas — props update in real time */
+  private renderLiveDataGrid(field: FieldConfig): TemplateResult {
+    const p = field.props ?? {};
+    const ep = (p.endpoint as string) || '';
+    return html`
+      <zs-field-datagrid
+        .config="${field}"
+        .endpoint="${ep}"
+        .authToken="${this.apiToken}"
+        .authHeaders="${this.apiToken ? { 'Authorization': 'Bearer ' + this.apiToken, ...(this.apiCompany ? { 'x-empresa': this.apiCompany } : {}), ...(this.apiBranch ? { 'x-sucursal': this.apiBranch } : {}) } : {}}"
+        .designMode="${(p.enableConfigurator as boolean) ?? false}"
+        .theme="${'light'}"
+        style="display:block;width:100%;min-height:200px;"
+      ></zs-field-datagrid>
+    `;
   }
 
   // ─── Right Panel (Properties — Figma-quality) ──────
@@ -1609,6 +1626,7 @@ export class ZsPageDesigner extends LitElement {
           ${this.renderToggle('Find (Ctrl+F)', (p.enableFind as boolean) ?? false, (v) => this.setProp(field, 'enableFind', v))}
           ${this.renderToggle('Status Bar', (p.enableStatusBar as boolean) ?? false, (v) => this.setProp(field, 'enableStatusBar', v))}
           ${this.renderToggle('Filter Panel', (p.enableFilterPanel as boolean) ?? false, (v) => this.setProp(field, 'enableFilterPanel', v))}
+          ${this.renderToggle('Configurador', (p.enableConfigurator as boolean) ?? false, (v) => this.setProp(field, 'enableConfigurator', v))}
           <div class="prop-divider"></div>
           <div class="prop-row"><span class="prop-label">Moneda</span><input class="prop-input" .value="${(p.defaultCurrency as string) ?? ''}" placeholder="USD, VES, EUR..." @change="${(e: Event) => this.setProp(field, 'defaultCurrency', (e.target as HTMLInputElement).value)}" /></div>
           <div class="prop-row"><span class="prop-label">Archivo Export</span><input class="prop-input" .value="${(p.exportFilename as string) ?? ''}" placeholder="clientes" @change="${(e: Event) => this.setProp(field, 'exportFilename', (e.target as HTMLInputElement).value)}" /></div>
