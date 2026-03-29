@@ -650,6 +650,9 @@ export class ZenttoStudioRenderer extends LitElement {
         return html`<zs-field-datagrid
           .config="${field}"
           .rows="${Array.isArray(value) ? value : (props.rows as unknown[]) ?? []}"
+          .endpoint="${(props.endpoint as string) ?? ''}"
+          .authHeaders="${(props.authHeaders as Record<string, string>) ?? {}}"
+          .authToken="${(props.authToken as string) ?? ''}"
           .theme="${this.themeMode}"
         ></zs-field-datagrid>`;
 

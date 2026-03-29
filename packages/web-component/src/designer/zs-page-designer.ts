@@ -1053,12 +1053,26 @@ export class ZsPageDesigner extends LitElement {
     const label = this.humanizeFieldName(fieldName);
     const meta = getAllFields().find(f => f.type === type);
 
+    // Find the source to get the endpoint for datagrid
+    const source = this.apiSources.find(s => s.id === dsId);
+    const endpoint = source?.endpoint ?? '';
+
     this.schema.sections[sectionIndex].fields.push({
       id,
       type,
       field: fieldName,
       label,
-      props: { ...meta?.defaultProps, dataSourceId: dsId },
+      props: {
+        ...meta?.defaultProps,
+        dataSourceId: dsId,
+        endpoint: endpoint || undefined,
+        authToken: this.apiToken || undefined,
+        authHeaders: this.apiToken ? {
+          'Authorization': `Bearer ${this.apiToken}`,
+          ...(this.apiCompany ? { 'x-empresa': this.apiCompany } : {}),
+          ...(this.apiBranch ? { 'x-sucursal': this.apiBranch } : {}),
+        } : undefined,
+      },
     });
     this.selectedFieldId = id;
     this.commitChange();

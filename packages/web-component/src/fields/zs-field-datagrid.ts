@@ -80,7 +80,8 @@ export class ZsFieldDatagrid extends LitElement {
   // ─── Resolved props from config ──────────────────────────────
 
   private get columns(): ColumnDef[] {
-    return (this.config?.props?.columns as ColumnDef[]) ?? [];
+    const configured = (this.config?.props?.columns as ColumnDef[]) ?? [];
+    return configured.length > 0 ? configured : this.autoColumns;
   }
 
   private get gridHeight(): string {
@@ -124,16 +125,31 @@ export class ZsFieldDatagrid extends LitElement {
   }
 
   private get gridRows(): unknown[] {
-    // Rows from props take precedence, then rows from property, then config.props.rows
+    // Priority: explicit rows > fetched rows > config.props.rows
     if (this.rows.length > 0) return this.rows;
+    if (this.fetchedRows.length > 0) return this.fetchedRows;
     return (this.config?.props?.rows as unknown[]) ?? [];
   }
+
+  @property({ type: String }) endpoint = '';
+  @property({ type: String }) authToken = '';
+  @property({ type: Object }) authHeaders: Record<string, string> = {};
+
+  @state() private fetchedRows: unknown[] = [];
+  @state() private autoColumns: ColumnDef[] = [];
 
   // ─── Lifecycle ───────────────────────────────────────────────
 
   connectedCallback() {
     super.connectedCallback();
     this.loadGrid();
+  }
+
+  updated(changed: Map<string, unknown>) {
+    if (changed.has('config') || changed.has('endpoint')) {
+      const ep = this.endpoint || (this.config?.props?.endpoint as string) || '';
+      if (ep && this.gridLoaded) this.fetchData(ep);
+    }
   }
 
   private async loadGrid() {
@@ -146,12 +162,78 @@ export class ZsFieldDatagrid extends LitElement {
       // @ts-ignore — optional peer dependency, loaded at runtime
       await import('@zentto/datagrid');
       this.gridLoaded = true;
+
+      // Auto-fetch if endpoint configured
+      const ep = this.endpoint || (this.config?.props?.endpoint as string) || '';
+      if (ep) await this.fetchData(ep);
     } catch (err) {
       this.loadError = `Failed to load @zentto/datagrid: ${err instanceof Error ? err.message : String(err)}`;
       console.warn('[zs-field-datagrid]', this.loadError);
     } finally {
       this.loading = false;
     }
+  }
+
+  /** Fetch data from endpoint and auto-generate columns */
+  private async fetchData(endpoint: string) {
+    try {
+      const url = endpoint.startsWith('http') ? endpoint : endpoint;
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        ...this.authHeaders,
+      };
+      if (this.authToken) headers['Authorization'] = `Bearer ${this.authToken}`;
+
+      const res = await fetch(url, { headers });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      let data = await res.json();
+
+      // Unwrap common response wrappers
+      if (data && !Array.isArray(data)) {
+        if (Array.isArray(data.data)) data = data.data;
+        else if (Array.isArray(data.rows)) data = data.rows;
+        else if (Array.isArray(data.items)) data = data.items;
+        else if (Array.isArray(data.results)) data = data.results;
+      }
+
+      if (Array.isArray(data)) {
+        this.fetchedRows = data;
+
+        // Auto-generate columns if none configured
+        if (this.columns.length === 0 && data.length > 0) {
+          const sample = data[0] as Record<string, unknown>;
+          this.autoColumns = Object.keys(sample)
+            .filter(k => !k.startsWith('_'))
+            .map(k => ({
+              field: k,
+              headerName: k.replace(/([A-Z])/g, ' $1').replace(/[_-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase()).trim(),
+              width: this.guessColumnWidth(k, sample[k]),
+              sortable: true,
+              type: this.guessColumnType(k, sample[k]),
+            }));
+        }
+      }
+    } catch (err) {
+      console.warn('[zs-field-datagrid] fetch error:', err);
+    }
+  }
+
+  private guessColumnWidth(key: string, value: unknown): number {
+    if (typeof value === 'boolean') return 80;
+    if (typeof value === 'number') return 100;
+    const str = String(value ?? '');
+    if (str.length > 50) return 250;
+    if (str.length > 20) return 180;
+    return 140;
+  }
+
+  private guessColumnType(key: string, value: unknown): string {
+    const lower = key.toLowerCase();
+    if (typeof value === 'number' || lower.includes('precio') || lower.includes('total') || lower.includes('saldo') || lower.includes('monto')) return 'number';
+    if (typeof value === 'boolean' || lower.includes('activ') || lower.includes('active')) return 'boolean';
+    if (lower.includes('fecha') || lower.includes('date')) return 'date';
+    return 'text';
   }
 
   // ─── Event Handling ──────────────────────────────────────────
