@@ -662,39 +662,180 @@ export class ZsAppWizard extends LitElement {
 
   private renderPagesStep() {
     if (!this.config) return nothing;
+    const globalSources = this.ensureDataSources();
+    const needsData = ['datagrid', 'chart', 'schema', 'report'];
 
     return html`
-      <div class="nav-list">
-        ${this.config.pages.map((page, i) => html`
-          <div class="nav-item-row">
-            <span class="nav-item-icon">${this.getContentIcon(page.content)}</span>
+      ${this.config.pages.map((page, i) => html`
+        <div style="border:1px solid #eee;border-radius:10px;padding:14px 16px;margin-bottom:10px;background:white;">
+          <!-- Row 1: Icon + Title + Type + Delete -->
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <span style="font-size:18px;">${this.getContentIcon(page.content)}</span>
             <div style="flex:1;">
-              <input class="zs-input" style="height:30px;font-size:13px;margin-bottom:4px;" .value="${page.title}" @input="${(e: Event) => { this.config!.pages[i].title = (e.target as HTMLInputElement).value; this.requestUpdate(); }}" />
-              <div style="display:flex;gap:8px;align-items:center;">
-                <span style="font-size:11px;color:var(--zs-text-muted);">/${page.segment}</span>
-                <select style="font-size:11px;padding:2px 6px;border:1px solid var(--zs-border);border-radius:4px;" .value="${page.content}" @change="${(e: Event) => { this.config!.pages[i].content = (e.target as HTMLSelectElement).value as any; this.requestUpdate(); }}">
-                  <option value="empty">Vacia</option>
-                  <option value="cards">Cards/Dashboard</option>
-                  <option value="datagrid">Grid de Datos</option>
-                  <option value="schema">Formulario</option>
-                  <option value="chart">Graficos</option>
-                  <option value="html">HTML</option>
-                  <option value="iframe">iFrame</option>
-                  <option value="tabs">Tabs</option>
-                  <option value="custom">Custom</option>
-                </select>
-              </div>
+              <input class="zs-input" style="height:32px;font-size:14px;font-weight:500;" .value="${page.title}" @input="${(e: Event) => { this.config!.pages[i].title = (e.target as HTMLInputElement).value; this.requestUpdate(); }}" />
             </div>
-            <button class="nav-item-btn nav-item-btn--danger" @click="${() => { this.config!.pages.splice(i, 1); this.requestUpdate(); }}">✕</button>
+            <button style="border:none;background:none;cursor:pointer;color:#ccc;font-size:16px;padding:4px;" title="Eliminar pagina"
+              @click="${() => { this.config!.pages.splice(i, 1); this.requestUpdate(); }}">✕</button>
           </div>
-        `)}
-      </div>
+
+          <!-- Row 2: Segment + Content Type -->
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:${needsData.includes(page.content) ? '10px' : '0'};">
+            <span style="font-size:11px;color:#bbb;font-family:'SF Mono','Consolas',monospace;">/${page.segment}</span>
+            <select style="font-size:12px;padding:4px 8px;border:1px solid #e0e0e0;border-radius:5px;background:white;font-family:inherit;cursor:pointer;"
+              .value="${page.content}"
+              @change="${(e: Event) => {
+                this.config!.pages[i].content = (e.target as HTMLSelectElement).value as any;
+                // Auto-create dataSources array when switching to data type
+                if (needsData.includes((e.target as HTMLSelectElement).value) && !page.dataSources) {
+                  page.dataSources = [];
+                }
+                this.requestUpdate();
+              }}"
+            >
+              <option value="empty">Vacia</option>
+              <option value="cards">Cards/Dashboard</option>
+              <option value="datagrid">Grid de Datos</option>
+              <option value="schema">Formulario</option>
+              <option value="chart">Graficos</option>
+              <option value="report">Reporte</option>
+              <option value="html">HTML</option>
+              <option value="iframe">iFrame</option>
+              <option value="tabs">Tabs</option>
+              <option value="custom">Custom</option>
+            </select>
+          </div>
+
+          <!-- Row 3: Data Source selector (only for data-driven pages) -->
+          ${needsData.includes(page.content) ? html`
+            <div style="background:#f8f9fa;border:1px solid #eee;border-radius:8px;padding:10px 12px;">
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+                <span style="font-size:12px;">🔌</span>
+                <span style="font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:0.3px;">Fuente de Datos</span>
+              </div>
+
+              <!-- Option 1: Select from global data sources -->
+              ${globalSources.length > 0 ? html`
+                <div style="margin-bottom:8px;">
+                  <label style="font-size:10px;color:#aaa;display:block;margin-bottom:3px;">Usar fuente global</label>
+                  <select style="width:100%;padding:5px 8px;border:1px solid #ddd;border-radius:5px;font-size:12px;background:white;font-family:inherit;"
+                    .value="${this.getPageDataSourceId(page)}"
+                    @change="${(e: Event) => {
+                      const dsId = (e.target as HTMLSelectElement).value;
+                      if (dsId) {
+                        const ds = globalSources.find(s => s.id === dsId);
+                        if (ds) { this.setPageDataSource(page, ds.id, ds.url ?? ''); }
+                      }
+                      this.requestUpdate();
+                    }}"
+                  >
+                    <option value="">-- Seleccionar --</option>
+                    ${globalSources.map(ds => html`<option value="${ds.id}">${ds.name || ds.id} (${ds.method ?? 'GET'} ${ds.url ?? ''})</option>`)}
+                  </select>
+                </div>
+              ` : ''}
+
+              <!-- Option 2: Quick endpoint selector -->
+              <div>
+                <label style="font-size:10px;color:#aaa;display:block;margin-bottom:3px;">O selecciona un endpoint rapido</label>
+                <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px;">
+                  ${[
+                    { label: 'Clientes', ep: '/v1/clientes' },
+                    { label: 'Articulos', ep: '/v1/articulos' },
+                    { label: 'Facturas', ep: '/v1/documentos-venta' },
+                    { label: 'Empleados', ep: '/v1/empleados' },
+                    { label: 'Cuentas', ep: '/v1/plan-cuentas' },
+                    { label: 'Proveedores', ep: '/v1/proveedores' },
+                    { label: 'Bancos', ep: '/v1/bancos' },
+                    { label: 'Paises', ep: '/v1/config/countries' },
+                  ].map(api => html`
+                    <button style="padding:3px 8px;border:1px solid ${this.getPageEndpoint(page) === api.ep ? '#e67e22' : '#ddd'};border-radius:4px;background:${this.getPageEndpoint(page) === api.ep ? '#fff7ed' : 'white'};cursor:pointer;font-size:10px;font-family:inherit;color:${this.getPageEndpoint(page) === api.ep ? '#e67e22' : '#888'};transition:all 0.15s;"
+                      @click="${() => { this.setPageDataSource(page, `ds_${page.segment}`, api.ep); this.requestUpdate(); }}"
+                    >${api.label}</button>
+                  `)}
+                </div>
+              </div>
+
+              <!-- Custom endpoint input -->
+              <div style="display:flex;gap:4px;">
+                <select style="width:70px;padding:4px;border:1px solid #ddd;border-radius:4px;font-size:10px;background:white;">
+                  <option>GET</option><option>POST</option>
+                </select>
+                <input style="flex:1;padding:5px 8px;border:1px solid #ddd;border-radius:5px;font-size:11px;font-family:'SF Mono','Consolas',monospace;background:white;"
+                  .value="${this.getPageEndpoint(page)}"
+                  placeholder="/v1/mi-endpoint"
+                  @change="${(e: Event) => { this.setPageDataSource(page, `ds_${page.segment}`, (e.target as HTMLInputElement).value); this.requestUpdate(); }}"
+                />
+              </div>
+
+              ${this.getPageEndpoint(page) ? html`
+                <div style="margin-top:6px;font-size:10px;color:#27ae60;display:flex;align-items:center;gap:4px;">
+                  ✓ Endpoint configurado: <code style="background:#e8f5e9;padding:1px 6px;border-radius:3px;">${this.getPageEndpoint(page)}</code>
+                </div>
+              ` : ''}
+            </div>
+          ` : ''}
+        </div>
+      `)}
       <button class="add-btn" @click="${() => {
         const id = `page-${Date.now()}`;
         this.config!.pages.push({ id, segment: id, title: 'Nueva Pagina', content: 'empty' });
         this.requestUpdate();
       }}">➕ Nueva Pagina</button>
     `;
+  }
+
+  /** Get the endpoint configured for a page */
+  private getPageEndpoint(page: PageConfig): string {
+    if (page.dataSources && page.dataSources.length > 0) {
+      return page.dataSources[0].url ?? '';
+    }
+    if (page.gridConfig?.dataSourceId && this.config?.dataSources) {
+      const ds = this.config.dataSources.find(s => s.id === page.gridConfig!.dataSourceId);
+      return ds?.url ?? '';
+    }
+    return '';
+  }
+
+  /** Get the dataSourceId for a page */
+  private getPageDataSourceId(page: PageConfig): string {
+    if (page.dataSources && page.dataSources.length > 0) return page.dataSources[0].id;
+    return page.gridConfig?.dataSourceId ?? '';
+  }
+
+  /** Set a data source for a specific page */
+  private setPageDataSource(page: PageConfig, dsId: string, url: string) {
+    // Create page-level data source
+    if (!page.dataSources) page.dataSources = [];
+
+    const existing = page.dataSources.find(s => s.id === dsId);
+    if (existing) {
+      existing.url = url;
+    } else {
+      page.dataSources = [{
+        id: dsId,
+        name: dsId.replace(/^ds_/, '').replace(/[-_]/g, ' '),
+        type: 'rest' as const,
+        url,
+        method: 'GET' as const,
+        autoFetch: true,
+      }];
+    }
+
+    // Also set gridConfig.dataSourceId for datagrid pages
+    if (page.content === 'datagrid') {
+      if (!page.gridConfig) {
+        page.gridConfig = { columns: [], dataSourceId: dsId, enableToolbar: true, enableSearch: true };
+      } else {
+        page.gridConfig.dataSourceId = dsId;
+      }
+    }
+
+    // Set chartConfig for chart pages
+    if (page.content === 'chart') {
+      if (!page.chartConfig) {
+        page.chartConfig = { charts: [{ id: 'c1', type: 'bar', title: '', dataSourceId: dsId, labelField: '', valueFields: [] }], columns: 2 };
+      }
+    }
   }
 
   private getContentIcon(type: string): string {
