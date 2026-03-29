@@ -78,10 +78,10 @@ zentto-studio/                          ← D:\DatqBoxWorkspace\zentto-studio
 └── package.json                        Workspaces: packages/*
 ```
 
-## Versión actual: 0.5.2 en npm
+## Versión actual: 0.6.0 en npm
 
 ```bash
-npm install @zentto/studio-core@0.5.2 @zentto/studio@0.5.2 @zentto/studio-react@0.5.2
+npm install @zentto/studio-core@0.6.0 @zentto/studio@0.6.0 @zentto/studio-react@0.6.0
 ```
 
 ## Cómo se usa

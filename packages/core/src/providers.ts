@@ -165,7 +165,10 @@ export function mergeProviders(...providers: (StudioProvider | undefined)[]): St
 
 // ─── Icon resolution with fallback chain ──────────────────────────
 
-const BUILTIN_ICONS: Record<string, string> = {
+import { MATERIAL_ICONS } from './icons';
+
+/** Emoji fallback map for environments that cannot render SVG */
+const EMOJI_FALLBACK: Record<string, string> = {
   // Navigation
   home: '🏠', dashboard: '📊', settings: '⚙️', search: '🔍', menu: '☰',
   // Actions
@@ -190,8 +193,9 @@ const BUILTIN_ICONS: Record<string, string> = {
 /**
  * Resolve an icon name using the provider chain:
  * 1. Provider's resolveIcon (MUI, FontAwesome, etc.)
- * 2. Built-in emoji map
- * 3. Raw string (emoji/text passthrough)
+ * 2. Material Design SVG icons (built-in)
+ * 3. Emoji fallback
+ * 4. Raw string passthrough (emoji/text/SVG)
  */
 export function resolveIcon(
   name: string | undefined,
@@ -200,15 +204,28 @@ export function resolveIcon(
 ): string {
   if (!name) return '';
 
-  // 1. Try provider
+  // 1. Try provider (host app's MUI, FontAwesome, custom SVGs)
   if (provider?.resolveIcon) {
     const result = provider.resolveIcon(name, props);
     if (result) return result;
   }
 
-  // 2. Built-in emoji map
-  if (name in BUILTIN_ICONS) return BUILTIN_ICONS[name];
+  // 2. Built-in Material Design SVG icons
+  if (name in MATERIAL_ICONS) {
+    let svg = MATERIAL_ICONS[name];
+    // Apply size/color props if provided
+    if (props?.size) {
+      svg = svg.replace(/width="24"/, `width="${props.size}"`).replace(/height="24"/, `height="${props.size}"`);
+    }
+    if (props?.color) {
+      svg = svg.replace(/fill="currentColor"/, `fill="${props.color}"`);
+    }
+    return svg;
+  }
 
-  // 3. Passthrough (emoji, SVG string, or text)
+  // 3. Emoji fallback
+  if (name in EMOJI_FALLBACK) return EMOJI_FALLBACK[name];
+
+  // 4. Passthrough (emoji, SVG string, or text)
   return name;
 }

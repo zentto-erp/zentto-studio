@@ -136,6 +136,17 @@ export {
 } from './templates/app-templates.js';
 export type { AppTemplateId } from './templates/app-templates.js';
 
+// Code generation
+export {
+  generateReactComponent,
+  generateNextPage,
+  generateAppPage,
+  toComponentName,
+  formatJson,
+  escapeForJsx,
+} from './codegen/index.js';
+export type { CodegenOptions } from './codegen/index.js';
+
 // Provider system
 export type {
   IconResolver, ComponentResolver, PageRenderer,

@@ -33,6 +33,8 @@ import './fields/zs-field-chart.js';
 import './fields/zs-field-media.js';
 import './fields/zs-field-treeview.js';
 import './fields/zs-field-chips.js';
+import './fields/zs-field-datagrid.js';
+import './fields/zs-field-report.js';
 
 @customElement('zentto-studio-renderer')
 export class ZenttoStudioRenderer extends LitElement {
@@ -643,6 +645,21 @@ export class ZenttoStudioRenderer extends LitElement {
           .errors="${baseAttrs.errors}"
           ?required="${baseAttrs.required}" ?disabled="${baseAttrs.disabled}"
         ></zs-field-chips>`;
+
+      case 'zs-field-datagrid':
+        return html`<zs-field-datagrid
+          .config="${field}"
+          .rows="${Array.isArray(value) ? value : (props.rows as unknown[]) ?? []}"
+          .theme="${this.themeMode}"
+        ></zs-field-datagrid>`;
+
+      case 'zs-field-report':
+        return html`<zs-field-report
+          .config="${field}"
+          .template="${props.template ?? null}"
+          .data="${value ?? props.data ?? null}"
+          .theme="${this.themeMode}"
+        ></zs-field-report>`;
 
       default:
         return html`<zs-field-text

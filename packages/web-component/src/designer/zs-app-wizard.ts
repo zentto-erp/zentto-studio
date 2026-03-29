@@ -1,12 +1,14 @@
 // @zentto/studio — App Creation Wizard
 // Step-by-step wizard to create an AppConfig from a template
-// Steps: 1) Template → 2) Branding → 3) Navigation → 4) Pages → 5) Preview
+// Steps: 1) Template → 2) Branding → 3) Menu → 4) Data Sources → 5) Pages → 6) Style & Theme → 7) Preview
 
 import { LitElement, html, css, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { studioTokens, fieldBaseStyles } from '../styles/tokens.js';
 import type { AppConfig, NavItem, PageConfig, BrandingConfig, CardItem } from '@zentto/studio-core';
+import type { DataSourceConfig, ThemeConfig } from '@zentto/studio-core';
 import { listAppTemplates, getAppTemplate } from '@zentto/studio-core';
+import { generateReactComponent, generateNextPage, generateAppPage } from '@zentto/studio-core';
 import type { AppTemplateId } from '@zentto/studio-core';
 
 // Import the app component for preview
@@ -23,8 +25,10 @@ const STEPS: WizardStep[] = [
   { id: 'template', title: 'Plantilla', icon: '📋', description: 'Elige una plantilla base' },
   { id: 'branding', title: 'Marca', icon: '🎨', description: 'Personaliza tu aplicacion' },
   { id: 'navigation', title: 'Menu', icon: '📑', description: 'Configura el sidebar' },
+  { id: 'datasources', title: 'Fuentes de Datos', icon: '🔗', description: 'Conecta tus APIs y servicios' },
   { id: 'pages', title: 'Paginas', icon: '📄', description: 'Agrega paginas y contenido' },
-  { id: 'preview', title: 'Vista Previa', icon: '👁️', description: 'Revisa y finaliza' },
+  { id: 'theme', title: 'Estilo y Tema', icon: '🎭', description: 'Personaliza colores y tipografia' },
+  { id: 'preview', title: 'Vista Previa', icon: '👁️', description: 'Revisa, exporta y finaliza' },
 ];
 
 const SIDEBAR_STYLES = [
@@ -47,6 +51,33 @@ const COLOR_PALETTE = [
   '#ffd93d', '#ff69b4', '#a29bfe', '#fd79a8', '#2d3436',
 ];
 
+const HTTP_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] as const;
+
+const THEME_MODES = [
+  { value: 'light', label: 'Claro', icon: '☀️' },
+  { value: 'dark', label: 'Oscuro', icon: '🌙' },
+  { value: 'auto', label: 'Automatico', icon: '🔄' },
+] as const;
+
+const FONT_OPTIONS = [
+  'Inter, sans-serif',
+  'Roboto, sans-serif',
+  'Open Sans, sans-serif',
+  'Poppins, sans-serif',
+  'Nunito, sans-serif',
+  'system-ui, sans-serif',
+  'Georgia, serif',
+  'Fira Code, monospace',
+];
+
+const RADIUS_OPTIONS = [
+  { value: 0, label: 'Sin bordes' },
+  { value: 4, label: 'Sutil (4px)' },
+  { value: 8, label: 'Medio (8px)' },
+  { value: 12, label: 'Redondeado (12px)' },
+  { value: 20, label: 'Pill (20px)' },
+];
+
 @customElement('zs-app-wizard')
 export class ZsAppWizard extends LitElement {
   static styles = [studioTokens, fieldBaseStyles, css`
@@ -63,13 +94,14 @@ export class ZsAppWizard extends LitElement {
     .wizard-steps {
       display: flex; background: var(--zs-bg-secondary);
       border-bottom: 1px solid var(--zs-border); padding: 0;
+      overflow-x: auto;
     }
     .wizard-step {
-      flex: 1; display: flex; align-items: center; gap: 8px;
-      padding: 16px 20px; cursor: pointer;
-      color: var(--zs-text-muted); font-size: 13px;
+      flex: 1; display: flex; align-items: center; gap: 6px;
+      padding: 14px 12px; cursor: pointer;
+      color: var(--zs-text-muted); font-size: 12px;
       border-bottom: 3px solid transparent;
-      transition: all 150ms;
+      transition: all 150ms; min-width: 0; white-space: nowrap;
     }
     .wizard-step:hover { color: var(--zs-text-secondary); }
     .wizard-step--active {
@@ -77,8 +109,8 @@ export class ZsAppWizard extends LitElement {
       font-weight: 500;
     }
     .wizard-step--done { color: var(--zs-success); }
-    .wizard-step-icon { font-size: 18px; }
-    .wizard-step-title { white-space: nowrap; }
+    .wizard-step-icon { font-size: 16px; }
+    .wizard-step-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
     /* Body */
     .wizard-body { padding: 32px; min-height: 400px; }
@@ -110,6 +142,7 @@ export class ZsAppWizard extends LitElement {
     .form-label { font-size: 13px; font-weight: 500; color: var(--zs-text); margin-bottom: 6px; display: block; }
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     .form-row-3 { grid-template-columns: 1fr 1fr 1fr; }
+    .form-row-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
 
     /* Color picker grid */
     .color-grid { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -194,6 +227,86 @@ export class ZsAppWizard extends LitElement {
     .btn--success { background: var(--zs-success); color: white; }
     .btn--success:hover { opacity: 0.9; }
     .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Data source rows */
+    .ds-card {
+      border: 1px solid var(--zs-border); border-radius: 8px;
+      padding: 16px; margin-bottom: 12px;
+      background: var(--zs-bg);
+    }
+    .ds-card-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .ds-card-title { font-size: 14px; font-weight: 500; color: var(--zs-text); }
+    .ds-method-badge {
+      display: inline-block; padding: 2px 8px; border-radius: 4px;
+      font-size: 11px; font-weight: 600; color: white;
+    }
+    .ds-method-GET { background: #27ae60; }
+    .ds-method-POST { background: #3498db; }
+    .ds-method-PUT { background: #e67e22; }
+    .ds-method-PATCH { background: #9b59b6; }
+    .ds-method-DELETE { background: #e74c3c; }
+
+    /* Theme preview card */
+    .theme-preview-card {
+      border: 1px solid var(--zs-border); border-radius: 12px;
+      padding: 24px; margin-top: 20px;
+      transition: all 200ms;
+    }
+    .theme-preview-header {
+      font-size: 16px; font-weight: 600; margin-bottom: 8px;
+    }
+    .theme-preview-text {
+      font-size: 13px; margin-bottom: 16px; opacity: 0.7;
+    }
+    .theme-preview-btn {
+      display: inline-block; padding: 8px 20px;
+      border: none; border-radius: 8px;
+      color: white; font-size: 13px; font-weight: 500;
+    }
+    .theme-preview-input {
+      display: inline-block; padding: 6px 12px;
+      border: 1px solid; border-radius: 8px;
+      font-size: 13px; margin-left: 8px; width: 150px;
+    }
+
+    /* Code modal */
+    .code-modal-overlay {
+      position: fixed; inset: 0; z-index: 9999;
+      background: rgba(0,0,0,0.5); display: flex;
+      align-items: center; justify-content: center;
+    }
+    .code-modal {
+      background: var(--zs-bg); border-radius: 12px;
+      width: 90%; max-width: 800px; max-height: 80vh;
+      display: flex; flex-direction: column;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    .code-modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px; border-bottom: 1px solid var(--zs-border);
+    }
+    .code-modal-header h3 { margin: 0; font-size: 16px; }
+    .code-modal-body {
+      flex: 1; overflow: auto; padding: 0;
+    }
+    .code-modal-body pre {
+      margin: 0; padding: 20px; font-size: 13px;
+      font-family: 'Fira Code', 'Cascadia Code', monospace;
+      line-height: 1.5; white-space: pre-wrap; word-break: break-word;
+      background: var(--zs-bg-secondary); min-height: 200px;
+    }
+    .code-modal-footer {
+      display: flex; gap: 8px; justify-content: flex-end;
+      padding: 12px 20px; border-top: 1px solid var(--zs-border);
+    }
+
+    /* Export buttons row */
+    .export-row {
+      display: flex; gap: 8px; flex-wrap: wrap;
+    }
   `];
 
   @property({ type: Object }) initialConfig: AppConfig | null = null;
@@ -204,6 +317,11 @@ export class ZsAppWizard extends LitElement {
   @state() private editingNavIndex = -1;
   @state() private showIconPicker = false;
   @state() private iconPickerTarget: 'nav' | 'branding' = 'nav';
+
+  // Code export modal
+  @state() private codeModalOpen = false;
+  @state() private codeModalTitle = '';
+  @state() private codeModalContent = '';
 
   connectedCallback() {
     super.connectedCallback();
@@ -239,6 +357,22 @@ export class ZsAppWizard extends LitElement {
     }));
   }
 
+  // ─── Helpers ──────────────────────────────────────
+
+  private ensureTheme(): ThemeConfig {
+    if (!this.config!.theme) {
+      this.config!.theme = { mode: 'light' };
+    }
+    return this.config!.theme;
+  }
+
+  private ensureDataSources(): DataSourceConfig[] {
+    if (!this.config!.dataSources) {
+      this.config!.dataSources = [];
+    }
+    return this.config!.dataSources;
+  }
+
   // ─── Render ───────────────────────────────────────
 
   render() {
@@ -261,7 +395,9 @@ export class ZsAppWizard extends LitElement {
           ${this.currentStep === 0 ? this.renderTemplateStep() :
             this.currentStep === 1 ? this.renderBrandingStep() :
             this.currentStep === 2 ? this.renderNavStep() :
-            this.currentStep === 3 ? this.renderPagesStep() :
+            this.currentStep === 3 ? this.renderDataSourcesStep() :
+            this.currentStep === 4 ? this.renderPagesStep() :
+            this.currentStep === 5 ? this.renderThemeStep() :
             this.renderPreviewStep()}
         </div>
 
@@ -273,6 +409,8 @@ export class ZsAppWizard extends LitElement {
           }
         </div>
       </div>
+
+      ${this.codeModalOpen ? this.renderCodeModal() : nothing}
     `;
   }
 
@@ -417,7 +555,110 @@ export class ZsAppWizard extends LitElement {
     this.requestUpdate();
   }
 
-  // ─── Step 4: Pages ────────────────────────────────
+  // ─── Step 4: Data Sources ─────────────────────────
+
+  private renderDataSourcesStep() {
+    if (!this.config) return nothing;
+    const sources = this.ensureDataSources();
+
+    return html`
+      ${sources.length === 0 ? html`
+        <div style="text-align:center;padding:40px 20px;color:var(--zs-text-muted);">
+          <div style="font-size:40px;margin-bottom:12px;">🔗</div>
+          <div style="font-size:14px;">No hay fuentes de datos configuradas.</div>
+          <div style="font-size:13px;margin-top:4px;">Agrega APIs REST para conectar tus paginas con datos reales.</div>
+        </div>
+      ` : nothing}
+
+      ${sources.map((ds, i) => html`
+        <div class="ds-card">
+          <div class="ds-card-header">
+            <span class="ds-card-title">${ds.name || `Fuente ${i + 1}`}</span>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <span class="ds-method-badge ds-method-${ds.method ?? 'GET'}">${ds.method ?? 'GET'}</span>
+              <button class="nav-item-btn nav-item-btn--danger" title="Eliminar"
+                @click="${() => { sources.splice(i, 1); this.requestUpdate(); }}">✕</button>
+            </div>
+          </div>
+
+          <div class="form-row" style="margin-bottom:12px;">
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label">ID</label>
+              <input class="zs-input" .value="${ds.id}" @input="${(e: Event) => {
+                ds.id = (e.target as HTMLInputElement).value;
+                this.requestUpdate();
+              }}" placeholder="customers" />
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label">Nombre</label>
+              <input class="zs-input" .value="${ds.name}" @input="${(e: Event) => {
+                ds.name = (e.target as HTMLInputElement).value;
+                this.requestUpdate();
+              }}" placeholder="Clientes" />
+            </div>
+          </div>
+
+          <div class="form-row" style="margin-bottom:12px;">
+            <div class="form-group" style="margin-bottom:0;grid-column:span 1;">
+              <label class="form-label">Metodo</label>
+              <select class="zs-input" .value="${ds.method ?? 'GET'}" @change="${(e: Event) => {
+                ds.method = (e.target as HTMLSelectElement).value as DataSourceConfig['method'];
+                this.requestUpdate();
+              }}">
+                ${HTTP_METHODS.map(m => html`<option value="${m}" ?selected="${ds.method === m}">${m}</option>`)}
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label">Intervalo de refresco (ms)</label>
+              <input class="zs-input" type="number" .value="${String(ds.refreshInterval ?? '')}" placeholder="0 = sin polling"
+                @input="${(e: Event) => {
+                  const v = parseInt((e.target as HTMLInputElement).value);
+                  ds.refreshInterval = isNaN(v) || v <= 0 ? undefined : v;
+                  this.requestUpdate();
+                }}" />
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom:12px;">
+            <label class="form-label">URL</label>
+            <input class="zs-input" .value="${ds.url ?? ''}" @input="${(e: Event) => {
+              ds.url = (e.target as HTMLInputElement).value;
+              this.requestUpdate();
+            }}" placeholder="https://api.ejemplo.com/v1/resource" />
+          </div>
+
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Headers (JSON, opcional)</label>
+            <textarea class="zs-input" rows="2" style="font-family:monospace;font-size:12px;resize:vertical;"
+              .value="${ds.headers ? JSON.stringify(ds.headers, null, 2) : ''}"
+              placeholder='{ "Authorization": "Bearer ..." }'
+              @change="${(e: Event) => {
+                const raw = (e.target as HTMLTextAreaElement).value.trim();
+                if (!raw) { ds.headers = undefined; this.requestUpdate(); return; }
+                try { ds.headers = JSON.parse(raw); } catch { /* ignore invalid JSON */ }
+                this.requestUpdate();
+              }}"
+            ></textarea>
+          </div>
+        </div>
+      `)}
+
+      <button class="add-btn" @click="${() => {
+        const id = `ds-${Date.now()}`;
+        this.ensureDataSources().push({
+          id,
+          name: '',
+          type: 'rest',
+          url: '',
+          method: 'GET',
+          autoFetch: true,
+        });
+        this.requestUpdate();
+      }}">🔗 Nueva Fuente de Datos</button>
+    `;
+  }
+
+  // ─── Step 5: Pages ────────────────────────────────
 
   private renderPagesStep() {
     if (!this.config) return nothing;
@@ -465,26 +706,246 @@ export class ZsAppWizard extends LitElement {
     return icons[type] ?? '📄';
   }
 
-  // ─── Step 5: Preview ──────────────────────────────
+  // ─── Step 6: Style & Theme ────────────────────────
+
+  private renderThemeStep() {
+    if (!this.config) return nothing;
+    const theme = this.ensureTheme();
+
+    return html`
+      <!-- Theme mode -->
+      <div class="form-group">
+        <label class="form-label">Modo de Tema</label>
+        <div class="style-grid">
+          ${THEME_MODES.map(m => html`
+            <div class="style-option ${theme.mode === m.value ? 'style-option--selected' : ''}"
+              @click="${() => { theme.mode = m.value as ThemeConfig['mode']; this.requestUpdate(); }}">
+              <div style="font-size:28px;margin-bottom:6px;">${m.icon}</div>
+              <div style="font-size:13px;font-weight:500;">${m.label}</div>
+            </div>
+          `)}
+        </div>
+      </div>
+
+      <!-- Primary color -->
+      <div class="form-group">
+        <label class="form-label">Color Primario (--zs-primary)</label>
+        <div class="color-grid">
+          ${COLOR_PALETTE.map(color => html`
+            <div class="color-swatch ${theme.primaryColor === color ? 'color-swatch--selected' : ''}"
+              style="background: ${color}"
+              @click="${() => { theme.primaryColor = color; this.requestUpdate(); }}"
+            ></div>
+          `)}
+        </div>
+      </div>
+
+      <!-- Font family -->
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Tipografia (--zs-font)</label>
+          <select class="zs-input" .value="${theme.fontFamily ?? 'Inter, sans-serif'}" @change="${(e: Event) => {
+            theme.fontFamily = (e.target as HTMLSelectElement).value;
+            this.requestUpdate();
+          }}">
+            ${FONT_OPTIONS.map(f => html`<option value="${f}" ?selected="${theme.fontFamily === f}">${f.split(',')[0]}</option>`)}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Border Radius (--zs-radius)</label>
+          <select class="zs-input" .value="${String(theme.borderRadius ?? 8)}" @change="${(e: Event) => {
+            theme.borderRadius = parseInt((e.target as HTMLSelectElement).value);
+            this.requestUpdate();
+          }}">
+            ${RADIUS_OPTIONS.map(r => html`<option value="${r.value}" ?selected="${theme.borderRadius === r.value}">${r.label}</option>`)}
+          </select>
+        </div>
+      </div>
+
+      <!-- Accent color -->
+      <div class="form-group">
+        <label class="form-label">Color de Acento (--zs-accent, opcional)</label>
+        <div class="color-grid">
+          ${COLOR_PALETTE.map(color => html`
+            <div class="color-swatch ${theme.accentColor === color ? 'color-swatch--selected' : ''}"
+              style="background: ${color}"
+              @click="${() => { theme.accentColor = color; this.requestUpdate(); }}"
+            ></div>
+          `)}
+        </div>
+      </div>
+
+      <!-- Font size & spacing -->
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Tamano de Fuente Base (px)</label>
+          <input class="zs-input" type="number" min="10" max="22" .value="${String(theme.fontSize ?? 14)}" @input="${(e: Event) => {
+            theme.fontSize = parseInt((e.target as HTMLInputElement).value) || 14;
+            this.requestUpdate();
+          }}" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Espaciado Base (px)</label>
+          <input class="zs-input" type="number" min="2" max="16" .value="${String(theme.spacing ?? 8)}" @input="${(e: Event) => {
+            theme.spacing = parseInt((e.target as HTMLInputElement).value) || 8;
+            this.requestUpdate();
+          }}" />
+        </div>
+      </div>
+
+      <!-- Mini preview -->
+      <div class="theme-preview-card" style="
+        background: ${theme.mode === 'dark' ? '#1e1e2d' : '#ffffff'};
+        color: ${theme.mode === 'dark' ? '#e0e0e0' : '#333333'};
+        font-family: ${theme.fontFamily ?? 'Inter, sans-serif'};
+        font-size: ${theme.fontSize ?? 14}px;
+        border-radius: ${theme.borderRadius ?? 8}px;
+      ">
+        <div class="theme-preview-header" style="color: ${theme.primaryColor ?? '#3498db'};">
+          Vista previa del tema
+        </div>
+        <div class="theme-preview-text">
+          Asi se vera tu aplicacion con estos ajustes de estilo.
+        </div>
+        <span class="theme-preview-btn" style="
+          background: ${theme.primaryColor ?? '#3498db'};
+          border-radius: ${theme.borderRadius ?? 8}px;
+        ">Boton Primario</span>
+        <input class="theme-preview-input" value="Campo de texto"
+          style="
+            border-color: ${theme.mode === 'dark' ? '#444' : '#ccc'};
+            border-radius: ${theme.borderRadius ?? 8}px;
+            background: ${theme.mode === 'dark' ? '#2a2a3d' : '#f9f9f9'};
+            color: ${theme.mode === 'dark' ? '#e0e0e0' : '#333'};
+            font-family: ${theme.fontFamily ?? 'Inter, sans-serif'};
+          "
+          readonly
+        />
+      </div>
+    `;
+  }
+
+  // ─── Step 7: Preview ──────────────────────────────
 
   private renderPreviewStep() {
     if (!this.config) return nothing;
 
+    const navPageCount = this.config.navigation.filter(
+      n => n.kind !== 'divider' && n.kind !== 'header',
+    ).length;
+    const dsCount = this.config.dataSources?.length ?? 0;
+
     return html`
-      <div style="display:flex;gap:16px;margin-bottom:16px;">
-        <div style="flex:1;">
+      <div style="display:flex;gap:16px;margin-bottom:16px;align-items:center;flex-wrap:wrap;">
+        <div style="flex:1;min-width:200px;">
           <div style="font-size:13px;color:var(--zs-text-secondary);margin-bottom:4px;">Resumen:</div>
-          <div style="font-size:14px;"><strong>${this.config.branding.title}</strong> — ${this.config.pages.length} paginas, ${this.config.navigation.filter(n => n.kind !== 'divider' && n.kind !== 'header').length} items en menu</div>
+          <div style="font-size:14px;">
+            <strong>${this.config.branding.title}</strong> —
+            ${this.config.pages.length} paginas,
+            ${navPageCount} items en menu${dsCount > 0 ? `, ${dsCount} fuentes de datos` : ''}
+          </div>
         </div>
+      </div>
+
+      <!-- Export buttons -->
+      <div class="export-row" style="margin-bottom:16px;">
+        <button class="btn btn--secondary" @click="${this.exportJson}">📋 Exportar JSON</button>
+        <button class="btn btn--secondary" @click="${this.exportReactCode}">⚛️ Exportar Codigo React</button>
+        <button class="btn btn--secondary" @click="${this.exportNextCode}">▲ Exportar Codigo Next.js</button>
         <button class="btn btn--secondary" @click="${() => {
           const json = JSON.stringify(this.config, null, 2);
           navigator.clipboard.writeText(json).then(() => {
             alert('JSON copiado al portapapeles');
           });
-        }}">📋 Copiar JSON</button>
+        }}">📎 Copiar JSON</button>
       </div>
+
       <div class="preview-container">
         <zentto-studio-app .config="${this.config}"></zentto-studio-app>
+      </div>
+    `;
+  }
+
+  // ─── Export Handlers ──────────────────────────────
+
+  private exportJson() {
+    if (!this.config) return;
+    const json = JSON.stringify(this.config, null, 2);
+    this.openCodeModal('Exportar JSON — AppConfig', json);
+  }
+
+  private exportReactCode() {
+    if (!this.config) return;
+    const code = generateAppPage(this.config, {
+      framework: 'react',
+      useClientDirective: false,
+    });
+    this.openCodeModal('Exportar Codigo React', code);
+  }
+
+  private exportNextCode() {
+    if (!this.config) return;
+    const code = generateAppPage(this.config, {
+      framework: 'nextjs',
+      useClientDirective: true,
+    });
+    this.openCodeModal('Exportar Codigo Next.js', code);
+  }
+
+  private openCodeModal(title: string, content: string) {
+    this.codeModalTitle = title;
+    this.codeModalContent = content;
+    this.codeModalOpen = true;
+  }
+
+  private closeCodeModal() {
+    this.codeModalOpen = false;
+    this.codeModalTitle = '';
+    this.codeModalContent = '';
+  }
+
+  private copyCodeToClipboard() {
+    navigator.clipboard.writeText(this.codeModalContent).then(() => {
+      // Briefly change button text via a subtle approach
+      alert('Codigo copiado al portapapeles');
+    });
+  }
+
+  private downloadCode() {
+    const isJson = this.codeModalTitle.includes('JSON');
+    const ext = isJson ? 'json' : 'tsx';
+    const mime = isJson ? 'application/json' : 'text/typescript';
+    const filename = isJson ? 'app-config.json' : 'StudioApp.tsx';
+
+    const blob = new Blob([this.codeModalContent], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // ─── Code Modal ───────────────────────────────────
+
+  private renderCodeModal() {
+    return html`
+      <div class="code-modal-overlay" @click="${(e: Event) => {
+        if (e.target === e.currentTarget) this.closeCodeModal();
+      }}">
+        <div class="code-modal">
+          <div class="code-modal-header">
+            <h3>${this.codeModalTitle}</h3>
+            <button class="nav-item-btn" @click="${this.closeCodeModal}" style="font-size:18px;">✕</button>
+          </div>
+          <div class="code-modal-body">
+            <pre>${this.codeModalContent}</pre>
+          </div>
+          <div class="code-modal-footer">
+            <button class="btn btn--secondary" @click="${this.downloadCode}">💾 Descargar</button>
+            <button class="btn btn--primary" @click="${this.copyCodeToClipboard}">📋 Copiar</button>
+          </div>
+        </div>
       </div>
     `;
   }

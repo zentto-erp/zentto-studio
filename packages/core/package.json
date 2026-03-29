@@ -1,6 +1,6 @@
 {
   "name": "@zentto/studio-core",
-  "version": "0.5.2",
+  "version": "0.6.0",
   "description": "Core logic engine for Zentto Studio — runtime UI builder. Schema validation, expression engine, data binding, and rule evaluation.",
   "type": "module",
   "main": "dist/index.js",

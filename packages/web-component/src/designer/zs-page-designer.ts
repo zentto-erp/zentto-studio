@@ -510,6 +510,44 @@ export class ZsPageDesigner extends LitElement {
       padding: 16px; border-radius: 4px; overflow: auto;
       white-space: pre; tab-size: 2;
     }
+
+    /* ─── InteractJS Drag & Drop ─────────────────── */
+    .dragging { opacity: 0.4; cursor: grabbing !important; }
+    .drag-clone {
+      position: fixed; pointer-events: none; z-index: 9999;
+      opacity: 0.85; border: 2px solid var(--zrd-accent);
+      border-radius: 6px; background: white;
+      box-shadow: 0 8px 24px rgba(25,118,210,0.25);
+      padding: 8px 12px; font-size: 12px; font-weight: 500;
+      color: var(--zrd-accent); max-width: 200px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .drop-active { border: 2px dashed var(--zrd-accent) !important; background: rgba(25,118,210,0.04) !important; }
+    .drop-target { background: rgba(25,118,210,0.1) !important; border-color: var(--zrd-accent) !important; }
+    .resize-active { outline: 2px dashed var(--zrd-accent); outline-offset: 2px; }
+    .drag-insert-line {
+      position: absolute; left: 4px; right: 4px; height: 2px;
+      background: var(--zrd-accent); border-radius: 1px; z-index: 10;
+      pointer-events: none;
+    }
+    .drag-insert-line::before, .drag-insert-line::after {
+      content: ''; position: absolute; top: -3px;
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--zrd-accent);
+    }
+    .drag-insert-line::before { left: -4px; }
+    .drag-insert-line::after { right: -4px; }
+    .canvas-field.can-drop { box-shadow: 0 0 0 2px rgba(25,118,210,0.3); }
+    .section-drop-zone {
+      min-height: 8px; transition: all 0.15s; border-radius: 4px;
+      margin: 2px 4px;
+    }
+    .section-drop-zone.drop-active {
+      min-height: 32px; border: 2px dashed var(--zrd-accent);
+      background: rgba(25,118,210,0.06);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; color: var(--zrd-accent);
+    }
   `;
 
   // ─── Properties ───────────────────────────────────
@@ -535,12 +573,364 @@ export class ZsPageDesigner extends LitElement {
   private redoStack: string[] = [];
   private saveTimer: ReturnType<typeof setTimeout> | null = null;
 
+  // InteractJS
+  private interactLoaded = false;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private interact: any = null;
+  private dragClone: HTMLElement | null = null;
+  private dragSourceType: FieldType | null = null;
+  private dragSourceFieldId: string | null = null;
+  private dragSourceSectionIndex = -1;
+  private dragInsertIndex = -1;
+  private dragTargetSectionIndex = -1;
+
   // ─── Lifecycle ────────────────────────────────────
 
   updated(changed: Map<string, unknown>) {
     if (changed.has('schema') && this.schema && this.undoStack.length === 0) {
       this.undoStack = [JSON.stringify(this.schema)];
     }
+    // Initialize InteractJS after render when in design mode
+    if (this.viewMode === 'design' && this.schema) {
+      this.initInteract();
+    }
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    this.cleanupInteract();
+  }
+
+  // ─── InteractJS Integration ───────────────────────
+
+  private async initInteract() {
+    if (!this.interactLoaded) {
+      try {
+        // @ts-ignore — optional peer dependency
+        const mod = await import('interactjs');
+        this.interact = mod.default;
+        this.interactLoaded = true;
+      } catch {
+        console.warn('[zs-page-designer] InteractJS not available, falling back to native drag');
+        return;
+      }
+    }
+    // Schedule setup after DOM updates
+    requestAnimationFrame(() => this.setupInteractions());
+  }
+
+  private cleanupInteract() {
+    if (!this.interact) return;
+    const root = this.shadowRoot;
+    if (!root) return;
+    // Clean all interact instances within shadow DOM
+    root.querySelectorAll('.toolbox-item, .canvas-field, .drop-zone, .section-drop-zone, .canvas-grid').forEach(el => {
+      try { this.interact!.unset(el as HTMLElement); } catch { /* already cleaned */ }
+    });
+    if (this.dragClone) {
+      this.dragClone.remove();
+      this.dragClone = null;
+    }
+  }
+
+  private setupInteractions() {
+    if (!this.interact || !this.shadowRoot) return;
+    const interact = this.interact;
+    const root = this.shadowRoot;
+
+    // ── Toolbox items: draggable to canvas ──
+    root.querySelectorAll('.toolbox-item').forEach(el => {
+      // Avoid re-initializing
+      if ((el as any).__interactSetup) return;
+      (el as any).__interactSetup = true;
+
+      interact(el as HTMLElement).draggable({
+        inertia: false,
+        autoScroll: true,
+        listeners: {
+          start: (event: any) => {
+            const type = event.target.getAttribute('data-field-type');
+            if (!type) return;
+            this.dragSourceType = type as FieldType;
+            this.dragSourceFieldId = null;
+            this.dragSourceSectionIndex = -1;
+            event.target.classList.add('dragging');
+            // Create clone
+            this.createDragClone(event.clientX, event.clientY, event.target.querySelector('.toolbox-label')?.textContent ?? type);
+          },
+          move: (event: any) => {
+            if (this.dragClone) {
+              this.dragClone.style.left = `${event.clientX + 12}px`;
+              this.dragClone.style.top = `${event.clientY + 12}px`;
+            }
+          },
+          end: (event: any) => {
+            event.target.classList.remove('dragging');
+            this.removeDragClone();
+            this.dragSourceType = null;
+          },
+        },
+      });
+    });
+
+    // ── Canvas fields: draggable for reorder + cross-section ──
+    root.querySelectorAll('.canvas-field').forEach(el => {
+      if ((el as any).__interactSetup) return;
+      (el as any).__interactSetup = true;
+
+      interact(el as HTMLElement).draggable({
+        inertia: false,
+        autoScroll: true,
+        listeners: {
+          start: (event: any) => {
+            const fieldId = event.target.getAttribute('data-field-id');
+            const si = parseInt(event.target.getAttribute('data-section-index') ?? '-1');
+            if (!fieldId) return;
+            this.dragSourceFieldId = fieldId;
+            this.dragSourceType = null;
+            this.dragSourceSectionIndex = si;
+            event.target.classList.add('dragging');
+            const label = event.target.querySelector('.field-preview-label')?.textContent ?? fieldId;
+            this.createDragClone(event.clientX, event.clientY, label);
+          },
+          move: (event: any) => {
+            if (this.dragClone) {
+              this.dragClone.style.left = `${event.clientX + 12}px`;
+              this.dragClone.style.top = `${event.clientY + 12}px`;
+            }
+            // Calculate insert position
+            this.updateInsertIndicator(event);
+          },
+          end: (event: any) => {
+            event.target.classList.remove('dragging');
+            this.removeDragClone();
+            this.removeInsertIndicator();
+            // Perform reorder if we have a valid target
+            if (this.dragSourceFieldId && this.dragTargetSectionIndex >= 0 && this.dragInsertIndex >= 0) {
+              this.performFieldMove(this.dragSourceFieldId, this.dragSourceSectionIndex, this.dragTargetSectionIndex, this.dragInsertIndex);
+            }
+            this.dragSourceFieldId = null;
+            this.dragSourceSectionIndex = -1;
+            this.dragInsertIndex = -1;
+            this.dragTargetSectionIndex = -1;
+          },
+        },
+      });
+    });
+
+    // ── Drop zones: accept fields from toolbox ──
+    root.querySelectorAll('.drop-zone, .section-drop-zone').forEach(el => {
+      if ((el as any).__interactSetup) return;
+      (el as any).__interactSetup = true;
+
+      interact(el as HTMLElement).dropzone({
+        accept: '.toolbox-item, .canvas-field',
+        overlap: 0.25,
+        ondragenter: (event: any) => {
+          event.target.classList.add('drop-active', 'drop-target');
+        },
+        ondragleave: (event: any) => {
+          event.target.classList.remove('drop-active', 'drop-target');
+        },
+        ondrop: (event: any) => {
+          event.target.classList.remove('drop-active', 'drop-target');
+          const si = parseInt(event.target.getAttribute('data-section-index') ?? '0');
+          if (this.dragSourceType) {
+            // Drop from toolbox
+            this.addField(this.dragSourceType, si);
+          } else if (this.dragSourceFieldId) {
+            // Drop from canvas (cross-section move)
+            const insertIdx = this.schema?.sections[si]?.fields.length ?? 0;
+            this.performFieldMove(this.dragSourceFieldId, this.dragSourceSectionIndex, si, insertIdx);
+          }
+        },
+      });
+    });
+
+    // ── Canvas grids: drop zones for reorder within section ──
+    root.querySelectorAll('.canvas-grid').forEach(el => {
+      if ((el as any).__interactSetup) return;
+      (el as any).__interactSetup = true;
+
+      interact(el as HTMLElement).dropzone({
+        accept: '.toolbox-item, .canvas-field',
+        overlap: 0.1,
+        ondragenter: (event: any) => {
+          event.target.classList.add('drop-active');
+        },
+        ondragleave: (event: any) => {
+          event.target.classList.remove('drop-active');
+        },
+        ondrop: (event: any) => {
+          event.target.classList.remove('drop-active');
+          const si = parseInt(event.target.getAttribute('data-section-index') ?? '0');
+          if (this.dragSourceType) {
+            const insertIdx = this.dragInsertIndex >= 0 ? this.dragInsertIndex : (this.schema?.sections[si]?.fields.length ?? 0);
+            this.addFieldAtIndex(this.dragSourceType, si, insertIdx);
+          }
+        },
+      });
+    });
+
+    // ── Resize handles on selected field ──
+    root.querySelectorAll('.canvas-field--selected').forEach(fieldEl => {
+      if ((fieldEl as any).__interactResize) return;
+      (fieldEl as any).__interactResize = true;
+
+      const maxCols = this.schema?.layout.columns ?? 2;
+
+      interact(fieldEl as HTMLElement).resizable({
+        edges: { left: '.rh-w, .rh-nw, .rh-sw', right: '.rh-e, .rh-ne, .rh-se', top: false, bottom: false },
+        listeners: {
+          start: (event: any) => {
+            event.target.classList.add('resize-active');
+          },
+          move: (event: any) => {
+            // Calculate colSpan based on width change
+            const grid = event.target.closest('.canvas-grid') as HTMLElement;
+            if (!grid) return;
+            const gridWidth = grid.getBoundingClientRect().width;
+            const colWidth = gridWidth / maxCols;
+            const newColSpan = Math.max(1, Math.min(maxCols, Math.round(event.rect.width / colWidth)));
+            const fieldId = event.target.getAttribute('data-field-id');
+            if (fieldId && this.schema) {
+              for (const s of this.schema.sections) {
+                const f = s.fields.find(f => f.id === fieldId);
+                if (f && f.colSpan !== newColSpan) {
+                  f.colSpan = newColSpan;
+                  this.requestUpdate();
+                  break;
+                }
+              }
+            }
+          },
+          end: (event: any) => {
+            event.target.classList.remove('resize-active');
+            this.commitChange();
+          },
+        },
+        modifiers: interact.modifiers ? [
+          interact.modifiers.restrictSize({
+            min: { width: 80, height: 30 },
+          }),
+        ] : [],
+      });
+    });
+  }
+
+  private createDragClone(x: number, y: number, label: string) {
+    this.removeDragClone();
+    const clone = document.createElement('div');
+    clone.className = 'drag-clone';
+    clone.textContent = label;
+    clone.style.left = `${x + 12}px`;
+    clone.style.top = `${y + 12}px`;
+    document.body.appendChild(clone);
+    this.dragClone = clone;
+  }
+
+  private removeDragClone() {
+    if (this.dragClone) {
+      this.dragClone.remove();
+      this.dragClone = null;
+    }
+  }
+
+  private updateInsertIndicator(event: any) {
+    if (!this.shadowRoot || !this.schema) return;
+    const root = this.shadowRoot;
+    // Find which canvas-grid we're over
+    const grids = root.querySelectorAll('.canvas-grid');
+    for (let si = 0; si < grids.length; si++) {
+      const grid = grids[si] as HTMLElement;
+      const rect = grid.getBoundingClientRect();
+      if (event.clientX >= rect.left && event.clientX <= rect.right &&
+          event.clientY >= rect.top && event.clientY <= rect.bottom) {
+        this.dragTargetSectionIndex = si;
+        // Find insert position among fields
+        const fields = grid.querySelectorAll('.canvas-field');
+        let insertIdx = fields.length;
+        for (let fi = 0; fi < fields.length; fi++) {
+          const fieldRect = (fields[fi] as HTMLElement).getBoundingClientRect();
+          const midY = fieldRect.top + fieldRect.height / 2;
+          if (event.clientY < midY) {
+            insertIdx = fi;
+            break;
+          }
+        }
+        this.dragInsertIndex = insertIdx;
+        this.showInsertLine(grid, fields, insertIdx);
+        return;
+      }
+    }
+    this.removeInsertIndicator();
+  }
+
+  private showInsertLine(grid: HTMLElement, fields: NodeListOf<Element>, index: number) {
+    this.removeInsertIndicator();
+    const line = document.createElement('div');
+    line.className = 'drag-insert-line';
+    line.setAttribute('data-insert-line', 'true');
+
+    if (fields.length === 0 || index >= fields.length) {
+      // Append at end
+      grid.appendChild(line);
+      line.style.position = 'relative';
+      line.style.marginTop = '4px';
+    } else {
+      // Insert before the field at index
+      const targetField = fields[index] as HTMLElement;
+      targetField.style.position = 'relative';
+      grid.insertBefore(line, targetField);
+      line.style.position = 'relative';
+      line.style.marginBottom = '4px';
+    }
+  }
+
+  private removeInsertIndicator() {
+    if (!this.shadowRoot) return;
+    this.shadowRoot.querySelectorAll('[data-insert-line]').forEach(el => el.remove());
+  }
+
+  private performFieldMove(fieldId: string, fromSi: number, toSi: number, toIndex: number) {
+    if (!this.schema || fromSi < 0) return;
+    const fromSection = this.schema.sections[fromSi];
+    const toSection = this.schema.sections[toSi];
+    if (!fromSection || !toSection) return;
+
+    const fromFi = fromSection.fields.findIndex(f => f.id === fieldId);
+    if (fromFi < 0) return;
+
+    const [field] = fromSection.fields.splice(fromFi, 1);
+
+    // Adjust target index if moving within same section and removing shifted indices
+    let adjustedIndex = toIndex;
+    if (fromSi === toSi && fromFi < toIndex) {
+      adjustedIndex = Math.max(0, toIndex - 1);
+    }
+    adjustedIndex = Math.min(adjustedIndex, toSection.fields.length);
+
+    toSection.fields.splice(adjustedIndex, 0, field);
+    this.commitChange();
+  }
+
+  private addFieldAtIndex(type: FieldType, sectionIndex: number, insertIndex: number) {
+    if (!this.schema) {
+      this.addField(type, sectionIndex);
+      return;
+    }
+    if (sectionIndex >= this.schema.sections.length) sectionIndex = 0;
+    const id = `${type}_${Date.now()}`;
+    const meta = getAllFields().find(f => f.type === type);
+    const newField: FieldConfig = {
+      id, type, field: id,
+      label: meta?.label ?? type,
+      props: meta?.defaultProps ? { ...meta.defaultProps } : undefined,
+    };
+    const idx = Math.min(insertIndex, this.schema.sections[sectionIndex].fields.length);
+    this.schema.sections[sectionIndex].fields.splice(idx, 0, newField);
+    this.selectedFieldId = id;
+    this.commitChange();
   }
 
   // ─── Undo/Redo ────────────────────────────────────
@@ -760,6 +1150,7 @@ export class ZsPageDesigner extends LitElement {
                   ${items.map(f => html`
                     <div class="toolbox-item"
                       draggable="true"
+                      data-field-type="${f.type}"
                       @dragstart="${(e: DragEvent) => { this.dragType = f.type; e.dataTransfer?.setData('text/plain', f.type); }}"
                       @dragend="${() => { this.dragType = null; }}"
                       @dblclick="${() => this.addField(f.type)}"
@@ -808,7 +1199,7 @@ export class ZsPageDesigner extends LitElement {
 
   private renderDesignCanvas() {
     if (!this.schema) {
-      return html`<div class="drop-zone ${this.dragType ? 'drop-zone--active' : ''}" style="width:500px;height:200px;display:flex;align-items:center;justify-content:center;"
+      return html`<div class="drop-zone ${this.dragType ? 'drop-zone--active' : ''}" data-section-index="0" style="width:500px;height:200px;display:flex;align-items:center;justify-content:center;"
         @dragover="${(e: DragEvent) => e.preventDefault()}"
         @drop="${(e: DragEvent) => { e.preventDefault(); if (this.dragType) { this.addField(this.dragType); this.dragType = null; } }}"
       >Arrastra un campo aqui para empezar</div>`;
@@ -826,10 +1217,12 @@ export class ZsPageDesigner extends LitElement {
               <span style="flex:1;"></span>
               <span style="font-size:10px;color:var(--zrd-text-muted);">${section.fields.length} campos</span>
             </div>
-            <div class="canvas-grid" style="grid-template-columns:repeat(${section.columns ?? cols}, 1fr);">
+            <div class="section-drop-zone" data-section-index="${si}" data-position="top"></div>
+            <div class="canvas-grid" data-section-index="${si}" style="grid-template-columns:repeat(${section.columns ?? cols}, 1fr);">
               ${section.fields.map((field, fi) => this.renderCanvasField(field, si, fi, section.columns ?? cols))}
             </div>
             <div class="drop-zone ${this.dragType ? 'drop-zone--active' : ''}"
+              data-section-index="${si}"
               @dragover="${(e: DragEvent) => e.preventDefault()}"
               @drop="${(e: DragEvent) => { e.preventDefault(); if (this.dragType) { this.addField(this.dragType, si); this.dragType = null; } }}"
             >${this.dragType ? '↓ Soltar aqui' : '+ Arrastra campos'}</div>
@@ -849,6 +1242,8 @@ export class ZsPageDesigner extends LitElement {
     return html`
       <div class="canvas-field ${isSelected ? 'canvas-field--selected' : ''}"
         style="${gridCol ? `grid-column:${gridCol};` : ''}"
+        data-field-id="${field.id}"
+        data-section-index="${si}"
         @click="${(e: Event) => { e.stopPropagation(); this.selectedFieldId = field.id; }}"
       >
         <!-- Type badge -->

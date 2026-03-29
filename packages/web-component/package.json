@@ -1,6 +1,6 @@
 {
   "name": "@zentto/studio",
-  "version": "0.5.2",
+  "version": "0.6.0",
   "description": "Zentto Studio — runtime UI builder web components. Renders dynamic forms, dashboards, and wizards from JSON schemas.",
   "type": "module",
   "main": "dist/zentto-studio-renderer.js",
@@ -39,6 +39,17 @@
   "dependencies": {
     "@zentto/studio-core": "*",
     "lit": "^3.2.0"
+  },
+  "optionalDependencies": {
+    "interactjs": "^1.10.27"
+  },
+  "peerDependencies": {
+    "@zentto/datagrid": ">=1.0.0",
+    "@zentto/report-viewer": ">=1.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@zentto/datagrid": { "optional": true },
+    "@zentto/report-viewer": { "optional": true }
   },
   "devDependencies": {
     "typescript": "^5.7.0"
