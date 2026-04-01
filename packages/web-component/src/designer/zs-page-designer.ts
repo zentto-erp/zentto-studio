@@ -1338,7 +1338,7 @@ export class ZsPageDesigner extends LitElement {
       { v: 'nomina', l: 'Nómina' }, { v: 'bancos', l: 'Bancos' }, { v: 'crm', l: 'CRM' },
     ];
     return html`
-      <div style="${this.dialogOverlay}" @click="${(e: Event) => { if (e.target === e.currentTarget) this.saveDialogOpen = false; }}">
+      <div style="${this.dialogOverlay}" @keydown="${(e: KeyboardEvent) => { if (e.key === 'Escape') this.saveDialogOpen = false; }}">
         <div style="${this.dialogBox}" @click="${(e: Event) => e.stopPropagation()}">
           <div style="${this.dialogHeader}">
             <span>${this.editingAddonId ? '💾 Actualizar' : '💾 Guardar'} en servidor</span>
@@ -1384,7 +1384,7 @@ export class ZsPageDesigner extends LitElement {
 
   private renderLoadDialog(): TemplateResult {
     return html`
-      <div style="${this.dialogOverlay}" @click="${(e: Event) => { if (e.target === e.currentTarget) this.loadDialogOpen = false; }}">
+      <div style="${this.dialogOverlay}" @keydown="${(e: KeyboardEvent) => { if (e.key === 'Escape') this.loadDialogOpen = false; }}">
         <div style="${this.dialogBox}max-height:70vh;" @click="${(e: Event) => e.stopPropagation()}">
           <div style="${this.dialogHeader}">
             <span>📂 Cargar desde servidor</span>

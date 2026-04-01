@@ -1241,7 +1241,7 @@ export class ZsLandingDesigner extends LitElement {
 
   private renderNavbarModal() {
     return html`
-      <div class="modal-overlay" @click="${(e: Event) => { if (e.target === e.currentTarget) this.editingNavbar = false; }}">
+      <div class="modal-overlay" @keydown="${(e: KeyboardEvent) => { if (e.key === 'Escape') this.editingNavbar = false; }}">
         <div class="modal">
           <div class="modal-header">
             <h3>Editar Navbar</h3>
@@ -1270,7 +1270,7 @@ export class ZsLandingDesigner extends LitElement {
 
   private renderFooterModal() {
     return html`
-      <div class="modal-overlay" @click="${(e: Event) => { if (e.target === e.currentTarget) this.editingFooter = false; }}">
+      <div class="modal-overlay" @keydown="${(e: KeyboardEvent) => { if (e.key === 'Escape') this.editingFooter = false; }}">
         <div class="modal">
           <div class="modal-header">
             <h3>Editar Footer</h3>

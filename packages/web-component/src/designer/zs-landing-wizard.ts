@@ -67,6 +67,44 @@ const SECTION_DESCRIPTIONS: Record<string, string> = {
   html: 'Bloque HTML personalizado',
 };
 
+// Factory for new sections with default content
+function createDefaultSection(type: LandingSectionType): LandingSection {
+  const id = `${type}-${Date.now()}`;
+  const base: LandingSection = { id, type };
+  switch (type) {
+    case 'hero':
+      base.heroConfig = { headline: 'Tu titular aqui', subheadline: 'Subtitulo', description: 'Descripcion de tu producto o servicio.', primaryCta: { label: 'Comenzar', href: '#' }, secondaryCta: { label: 'Saber mas', href: '#' }, alignment: 'center', minHeight: '80vh' };
+      base.variant = 'centered'; break;
+    case 'features':
+      base.featuresConfig = { headline: 'Caracteristicas', subtitle: 'Todo lo que necesitas', items: [{ icon: '🚀', title: 'Rapido', description: 'Rendimiento ultrarapido.' }, { icon: '🔒', title: 'Seguro', description: 'Seguridad empresarial.' }, { icon: '📊', title: 'Analitica', description: 'Insights accionables.' }], columns: 3, variant: 'cards' }; break;
+    case 'pricing':
+      base.pricingConfig = { headline: 'Precios', subtitle: 'Elige tu plan', plans: [{ name: 'Basico', price: '$9', period: '/mes', features: ['Feature 1', 'Feature 2'], cta: { label: 'Empezar', href: '#' } }, { name: 'Pro', price: '$29', period: '/mes', features: ['Todo en Basico', 'Feature 3'], cta: { label: 'Empezar', href: '#' }, highlighted: true }], billingToggle: false }; break;
+    case 'testimonials':
+      base.testimonialsConfig = { headline: 'Lo que dicen nuestros clientes', items: [{ quote: 'Excelente producto!', name: 'Juan Perez', title: 'CEO', company: 'Acme' }], variant: 'grid' }; break;
+    case 'cta':
+      base.ctaConfig = { headline: 'Listo para empezar?', description: 'Unete a miles de clientes satisfechos.', primaryCta: { label: 'Comenzar ahora', href: '#' }, variant: 'centered' }; break;
+    case 'stats':
+      base.statsConfig = { headline: 'Nuestro impacto', items: [{ value: '100', label: 'Clientes', suffix: '+' }, { value: '99.9', label: 'Uptime', suffix: '%' }] }; break;
+    case 'faq':
+      base.faqConfig = { headline: 'Preguntas frecuentes', subtitle: 'Resolvemos tus dudas', items: [{ question: 'Como funciona?', answer: 'Es muy sencillo de usar.' }], variant: 'accordion' }; break;
+    case 'team':
+      base.teamConfig = { headline: 'Nuestro equipo', subtitle: 'Las personas detras del producto', members: [{ name: 'Maria Garcia', role: 'CEO' }], columns: 3 }; break;
+    case 'gallery':
+      base.galleryConfig = { headline: 'Galeria', images: [{ src: 'https://placehold.co/600x400/e2e8f0/475569?text=Imagen+1', alt: 'Imagen 1' }], columns: 3, variant: 'grid' }; break;
+    case 'logos':
+      base.logosConfig = { headline: 'Empresas que confian en nosotros', logos: [{ src: '', alt: 'Empresa 1' }, { src: '', alt: 'Empresa 2' }], grayscale: true }; break;
+    case 'content':
+      base.contentConfig = { headline: 'Sobre nosotros', body: '<p>Cuenta tu historia aqui.</p>', imagePosition: 'right', bodyFormat: 'html' }; break;
+    case 'video':
+      base.videoConfig = { headline: 'Mira nuestro demo', subtitle: 'Descubre como funciona', videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', provider: 'youtube' }; break;
+    case 'contact':
+      base.contactConfig = { headline: 'Contactanos', subtitle: 'Nos encantaria escucharte' }; break;
+    case 'html':
+      base.htmlContent = '<div style="padding:40px;text-align:center;"><h2>HTML personalizado</h2><p>Edita este bloque.</p></div>'; break;
+  }
+  return base;
+}
+
 const ALL_SECTION_TYPES: LandingSectionType[] = [
   'hero', 'features', 'pricing', 'testimonials', 'cta', 'stats',
   'faq', 'team', 'gallery', 'logos', 'content', 'video', 'contact', 'html',
@@ -944,10 +982,7 @@ export class ZsLandingWizard extends LitElement {
 
   private _addSection(type: LandingSectionType) {
     const sections = [...this._sections];
-    sections.push({
-      id: `${type}-${Date.now()}`,
-      type,
-    });
+    sections.push(createDefaultSection(type));
     this._setSections(sections);
     this._showSectionPalette = false;
   }
