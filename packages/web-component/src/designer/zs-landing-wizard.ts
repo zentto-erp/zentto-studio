@@ -395,8 +395,11 @@ export class ZsLandingWizard extends LitElement {
     /* ── Preview (Step 6) ───────────────────────────── */
     .preview-container {
       border: 1px solid var(--zs-border); border-radius: 10px;
-      overflow: hidden; background: white;
-      max-height: 600px; overflow-y: auto;
+      overflow-y: auto; background: white;
+      min-height: 400px; max-height: 70vh;
+    }
+    .preview-container zs-landing-page {
+      display: block; min-height: 400px;
     }
     .preview-actions {
       display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap;
@@ -952,13 +955,32 @@ export class ZsLandingWizard extends LitElement {
   // ─── Step 6: Preview ──────────────────────────────
 
   private _renderPreview() {
+    const sections = this._sections;
+    const page = this._config.pages?.[0] ?? {
+      id: 'home', segment: 'home', title: 'Home',
+      content: 'landing' as const, landingSections: sections,
+    };
+    const lc = this._config.landingConfig;
+
     return html`
       <h2 class="wizard-title">Vista previa</h2>
-      <p class="wizard-desc">Asi se ve tu sitio. Puedes finalizar, abrir el designer completo o exportar la configuracion.</p>
+      <p class="wizard-desc">
+        Asi se ve tu sitio (${sections.length} secciones).
+        Puedes finalizar, abrir el designer completo o exportar la configuracion.
+      </p>
 
-      <div class="preview-container">
-        <zs-landing-page .config=${this._config}></zs-landing-page>
-      </div>
+      ${sections.length === 0 ? html`
+        <div style="padding:40px;text-align:center;color:#888;border:1px dashed #ccc;border-radius:10px;">
+          No hay secciones. Vuelve al paso anterior para agregar secciones.
+        </div>
+      ` : html`
+        <div class="preview-container">
+          <zs-landing-page
+            .page=${page}
+            .landingConfig=${lc}
+          ></zs-landing-page>
+        </div>
+      `}
 
       <div class="preview-actions">
         <button class="btn btn--primary" @click=${this._emitOpenDesigner}>
