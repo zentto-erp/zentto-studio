@@ -1134,12 +1134,14 @@ export class ZsLandingDesigner extends LitElement {
         ${this.showJson ? this.renderJsonEditor() : html`
           <!-- CENTER PANEL: Section List & Preview -->
           <div class="center-panel">
-            <div class="section-list">
+            <div class="section-list"
+            @dragover="${(e: DragEvent) => { e.preventDefault(); e.dataTransfer!.dropEffect = this.paletteDragType ? 'copy' : 'move'; }}"
+            @drop="${(e: DragEvent) => { if (this.paletteDragType) { e.preventDefault(); this.addSection(this.paletteDragType); this.paletteDragType = null; this.dragSourceIndex = -1; this.dragOverIndex = -1; } }}">
               ${sections.length === 0 ? html`
-                <div style="text-align:center;padding:40px 20px;color:var(--zs-text-muted);">
-                  <div style="font-size:36px;margin-bottom:12px;">📄</div>
+                <div class="drop-zone drop-zone--active" style="min-height:120px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;">
+                  <div style="font-size:36px;">📄</div>
                   <div style="font-size:14px;">No hay secciones.</div>
-                  <div style="font-size:12px;margin-top:4px;">Arrastra o doble-clic en una seccion del panel izquierdo.</div>
+                  <div style="font-size:12px;">Arrastra una seccion aqui o doble-clic en el panel izquierdo.</div>
                 </div>
               ` : nothing}
 
