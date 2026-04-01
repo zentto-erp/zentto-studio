@@ -71,5 +71,44 @@
       console.log('Field changed:', e.detail.fieldId, '=', e.detail.value);
     });
   </script>
+
+  <!-- ─── Landing Page Example ──────────────────────────────────── -->
+  <div class="container" style="margin-top: 60px;">
+    <h1>Zentto Studio — Landing Page Example</h1>
+    <p>A full landing page rendered from a template:</p>
+
+    <div style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
+      <button onclick="loadTemplate('saas-startup')">SaaS Startup</button>
+      <button onclick="loadTemplate('portfolio-minimal')">Portfolio</button>
+      <button onclick="loadTemplate('restaurant-menu')">Restaurant</button>
+      <button onclick="loadTemplate('ecommerce-store')">E-Commerce</button>
+      <button onclick="loadTemplate('blog-standard')">Blog</button>
+    </div>
+
+    <zentto-studio-app id="landing-app" style="display: block; width: 100%; min-height: 600px; border: 1px solid #ddd; border-radius: 8px;"></zentto-studio-app>
+  </div>
+
+  <script type="module">
+    import 'https://unpkg.com/@zentto/studio@latest/dist/zentto-studio-app.js';
+    import 'https://unpkg.com/@zentto/studio@latest/dist/landing/index.js';
+    import {
+      getLandingTemplate,
+      applyThemePresetToConfig,
+      getThemePreset,
+    } from 'https://unpkg.com/@zentto/studio-core@latest/dist/index.js';
+
+    const app = document.getElementById('landing-app');
+
+    // Load default template
+    window.loadTemplate = function(templateId) {
+      let config = getLandingTemplate(templateId);
+      if (config) {
+        app.config = config;
+      }
+    };
+
+    // Load initial template
+    window.loadTemplate('saas-startup');
+  </script>
 </body>
 </html>

@@ -46,6 +46,21 @@ export type {
   PermissionConfig,
   SelectOption,
   StudioBindingContext,
+  // Landing page types
+  AppConfig,
+  LandingConfig,
+  LandingSection,
+  LandingSectionType,
+  SeoConfig,
+  HeroSectionConfig,
+  FeaturesSectionConfig,
+  CtaSectionConfig,
+  PricingSectionConfig,
+  TestimonialsSectionConfig,
+  BlogListConfig,
+  BlogPostConfig,
+  LandingTemplateMeta,
+  LandingTemplateCategory,
 } from '@zentto/studio-core';
 
 // Re-export core utilities
@@ -56,4 +71,8 @@ export {
   evaluateCondition,
   DataModel,
   EventBus,
+  // Landing templates
+  getLandingTemplate,
+  listLandingTemplates,
+  listLandingTemplatesByCategory,
 } from '@zentto/studio-core';

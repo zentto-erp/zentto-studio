@@ -1,6 +1,10 @@
 // Example: Zentto Studio in React / Next.js (App Router)
 // File: app/my-form/page.tsx
 //
+// This file contains two examples:
+//   1. CustomerForm — Dynamic form from StudioSchema
+//   2. LandingPage — Full landing page from a template
+//
 // Requirements:
 //   npm install @zentto/studio @zentto/studio-core @zentto/studio-react
 //   next.config.mjs: transpilePackages: ['@zentto/studio', '@zentto/studio-core', '@zentto/studio-react', 'lit']
@@ -98,4 +102,65 @@ export default function CustomerForm() {
       <zentto-studio-renderer ref={formRef} />
     </div>
   );
+}
+
+
+// ─── Example 2: Landing Page from Template ──────────────────────────
+
+// File: app/landing/page.tsx
+
+// JSX type declaration for the app web component
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      "zentto-studio-app": React.DetailedHTMLProps<
+        React.HTMLAttributes<HTMLElement> & Record<string, any>,
+        HTMLElement
+      >;
+    }
+  }
+}
+
+import {
+  getLandingTemplate,
+  applyThemePresetToConfig,
+  getThemePreset,
+  loadGoogleFonts,
+} from "@zentto/studio-core";
+
+export function LandingPage() {
+  const [ready, setReady] = useState(false);
+  const appRef = useRef<any>(null);
+
+  // Load web components (app shell + landing sections)
+  useEffect(() => {
+    Promise.all([
+      import("@zentto/studio/app"),
+      import("@zentto/studio/landing"),
+    ]).then(() => setReady(true));
+  }, []);
+
+  // Set config once components are registered
+  useEffect(() => {
+    if (!ready || !appRef.current) return;
+
+    // 1. Pick a template
+    let config = getLandingTemplate("saas-startup");
+
+    // 2. Optionally apply a theme preset
+    const preset = getThemePreset("emerald");
+    if (preset) {
+      config = applyThemePresetToConfig(config, preset);
+    }
+
+    // 3. Load Google Fonts used by the template
+    loadGoogleFonts(["Inter", "Poppins"]);
+
+    // 4. Assign to the web component
+    appRef.current.config = config;
+  }, [ready]);
+
+  if (!ready) return <div>Loading landing page...</div>;
+
+  return <zentto-studio-app ref={appRef} style={{ display: "block", width: "100%" }} />;
 }

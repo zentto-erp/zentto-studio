@@ -27,6 +27,10 @@ Think MUI Toolpad + SAP Screen Personas + Retool, but as a **framework-agnostic 
 - **Framework Agnostic** — Works in Vanilla JS, React, Vue, Angular, .NET Blazor, Vite
 - **TypeScript** — Full type safety with Zod validation
 - **Zero Config** — One `<script>` tag or `npm install` and you're ready
+- **Landing Pages** — 14 section types, 15 ready-made templates, visual designer, dark mode
+- **Blog Engine** — Markdown-based blog with 3 layouts (grid, list, magazine), JSON-LD SEO
+- **8 Theme Presets** — Indigo, Emerald, Rose, Amber, Ocean, Slate, Midnight, Sunset
+- **Google Fonts** — Built-in loader for 14+ popular fonts
 
 ---
 
@@ -96,6 +100,85 @@ export default function MyForm() {
 }
 ```
 
+### Landing Page (CDN)
+
+```html
+<script type="module">
+  import 'https://unpkg.com/@zentto/studio@latest/dist/zentto-studio-app.js';
+  import 'https://unpkg.com/@zentto/studio@latest/dist/landing/index.js';
+</script>
+
+<zentto-studio-app id="app"></zentto-studio-app>
+
+<script type="module">
+  import { getLandingTemplate } from 'https://unpkg.com/@zentto/studio-core@latest/dist/index.js';
+
+  const config = getLandingTemplate('saas-startup');
+  document.getElementById('app').config = config;
+</script>
+```
+
+### Landing Page (React / Next.js)
+
+```tsx
+"use client";
+import { useEffect, useState, useRef } from "react";
+import { getLandingTemplate, applyThemePresetToConfig, getThemePreset } from "@zentto/studio-core";
+
+export default function LandingPage() {
+  const [ready, setReady] = useState(false);
+  const ref = useRef<any>(null);
+
+  useEffect(() => {
+    Promise.all([
+      import("@zentto/studio/app"),
+      import("@zentto/studio/landing"),
+    ]).then(() => setReady(true));
+  }, []);
+
+  useEffect(() => {
+    if (!ready || !ref.current) return;
+    let config = getLandingTemplate('saas-startup');
+    // Optional: apply a theme preset
+    const preset = getThemePreset('emerald');
+    if (preset) config = applyThemePresetToConfig(config, preset);
+    ref.current.config = config;
+  }, [ready]);
+
+  if (!ready) return <div>Loading...</div>;
+  return <zentto-studio-app ref={ref} />;
+}
+```
+
+### Landing Designer (React / Next.js)
+
+```tsx
+"use client";
+import { useEffect, useState, useRef } from "react";
+
+export default function DesignerPage() {
+  const [ready, setReady] = useState(false);
+  const ref = useRef<any>(null);
+
+  useEffect(() => {
+    Promise.all([
+      import("@zentto/studio/landing"),
+      import("@zentto/studio/landing-designer"),
+    ]).then(() => setReady(true));
+  }, []);
+
+  useEffect(() => {
+    if (!ready || !ref.current) return;
+    ref.current.addEventListener('designer-save', (e: CustomEvent) => {
+      console.log('Landing config:', e.detail.config);
+    });
+  }, [ready]);
+
+  if (!ready) return <div>Loading...</div>;
+  return <zs-landing-designer ref={ref} />;
+}
+```
+
 ---
 
 ## Packages
@@ -103,7 +186,7 @@ export default function MyForm() {
 | Package | Description | Size |
 |---------|-------------|------|
 | [`@zentto/studio-core`](https://www.npmjs.com/package/@zentto/studio-core) | Logic engine: types, schema validation, expressions, data binding, rules, i18n | ~60 KB |
-| [`@zentto/studio`](https://www.npmjs.com/package/@zentto/studio) | Web components (Lit 3.x): renderer, designer, app shell, fields, modals | ~90 KB |
+| [`@zentto/studio`](https://www.npmjs.com/package/@zentto/studio) | Web components (Lit 3.x): renderer, designer, app shell, landing, blog, modals | ~120 KB |
 | [`@zentto/studio-react`](https://www.npmjs.com/package/@zentto/studio-react) | React wrapper via `@lit/react` with event bindings | ~2 KB |
 
 ---
@@ -153,6 +236,26 @@ Step-by-step wizard to create an `AppConfig` from a template.
 
 **Events:** `wizard-complete`
 
+### `<zs-landing-designer>`
+
+Visual landing page editor with section drag-drop, property panel, live preview, undo/redo, and template selector.
+
+```html
+<zs-landing-designer></zs-landing-designer>
+```
+
+**Events:** `designer-save`, `designer-preview`
+
+### Blog Components
+
+```html
+<!-- Blog post list -->
+<zs-blog-list layout="grid" columns="3"></zs-blog-list>
+
+<!-- Single blog post -->
+<zs-blog-post></zs-blog-post>
+```
+
 ### Dialogs
 
 ```html
@@ -176,6 +279,70 @@ Step-by-step wizard to create an `AppConfig` from a template.
 | **Data** | `lookup`, `datagrid`, `report`, `chart`, `treeview` |
 | **Media** | `file`, `image`, `media` |
 | **Layout** | `html`, `separator`, `heading` |
+
+---
+
+## Landing Page Section Types
+
+| Type | Description |
+|------|-------------|
+| `hero` | Full-width hero with headline, subtitle, CTA buttons, optional image |
+| `features` | Feature cards grid with icons and descriptions |
+| `pricing` | Pricing table with tiers, features, and CTA |
+| `testimonials` | Customer testimonials carousel/grid |
+| `cta` | Call-to-action banner |
+| `stats` | Key metrics/numbers display |
+| `faq` | Accordion-style FAQ |
+| `team` | Team member cards |
+| `gallery` | Image gallery grid |
+| `logos` | Logo cloud (partners, clients) |
+| `content` | Rich text content section |
+| `video` | Embedded video section |
+| `contact` | Contact form section |
+| `html` | Raw HTML section |
+
+### Landing Templates (15)
+
+| Category | Templates |
+|----------|-----------|
+| **SaaS** | `saas-startup`, `saas-product` |
+| **Portfolio** | `portfolio-minimal`, `portfolio-agency` |
+| **Business** | `consulting-firm`, `nonprofit-charity` |
+| **E-Commerce** | `ecommerce-store`, `restaurant-menu` |
+| **Blog** | `blog-standard`, `blog-magazine` |
+| **Events** | `event-conference` |
+| **Health** | `fitness-gym` |
+| **Real Estate** | `realestate-listing` |
+| **Education** | `education-course` |
+| **Apps** | `app-download` |
+
+### Theme Presets
+
+Apply a color scheme to any landing config:
+
+```ts
+import { getLandingTemplate, applyThemePresetToConfig, getThemePreset } from '@zentto/studio-core';
+
+let config = getLandingTemplate('saas-startup');
+const preset = getThemePreset('midnight'); // dark theme
+config = applyThemePresetToConfig(config, preset);
+```
+
+Available presets: `indigo`, `emerald`, `rose`, `amber`, `ocean`, `slate`, `midnight`, `sunset`.
+
+---
+
+## Package Exports
+
+| Import Path | Content |
+|-------------|---------|
+| `@zentto/studio` | Renderer web component |
+| `@zentto/studio/app` | Full app shell (`<zentto-studio-app>`) |
+| `@zentto/studio/designer` | Designer placeholder |
+| `@zentto/studio/page-designer` | Page designer (`<zs-page-designer>`) |
+| `@zentto/studio/wizard` | App wizard (`<zs-app-wizard>`) |
+| `@zentto/studio/landing` | All landing page web components |
+| `@zentto/studio/landing-designer` | Landing page visual editor |
 
 ---
 

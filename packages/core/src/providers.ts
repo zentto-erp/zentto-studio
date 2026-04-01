@@ -140,6 +140,9 @@ export interface StudioProvider {
   /** CSS class mappings (e.g., MUI class names the host uses) */
   cssClasses?: Record<string, string>;
 
+  /** Update page SEO meta tags (title, description, Open Graph, etc.) */
+  updateSeo?: (seo: import('./app-types.js').SeoConfig) => void;
+
   /** Additional config the host app wants to pass through */
   extra?: Record<string, unknown>;
 }

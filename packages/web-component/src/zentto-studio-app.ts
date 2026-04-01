@@ -6,9 +6,12 @@ import { LitElement, html, css, nothing, type TemplateResult } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { studioTokens } from './styles/tokens.js';
+import './landing/zs-landing-page.js';
+import './blog/zs-blog-list.js';
+import './blog/zs-blog-post.js';
 import type {
   AppConfig, NavItem, PageConfig, CardItem, UserContext, GridColumnDef,
-  StudioProvider,
+  StudioProvider, SeoConfig,
 } from '@zentto/studio-core';
 import {
   type StudioSchema, type StudioBindingContext,
@@ -404,6 +407,11 @@ export class ZenttoStudioApp extends LitElement {
       return html`<div class="zs-empty"><span class="zs-empty-icon">⚙️</span><span class="zs-empty-text">No app config provided</span></div>`;
     }
 
+    // Landing/Blog mode: skip the app shell entirely
+    if (this.config.appMode === 'landing' || this.config.appMode === 'blog') {
+      return this.renderLandingMode();
+    }
+
     const sidebarStyle = this.config.branding.sidebarStyle ?? 'dark';
     const headerStyle = this.config.branding.headerStyle ?? 'light';
     const sidebarClass = `zs-sidebar ${this.sidebarCollapsed ? 'zs-sidebar--collapsed' : ''} ${sidebarStyle === 'light' ? 'zs-sidebar--light' : ''}`;
@@ -603,6 +611,12 @@ export class ZenttoStudioApp extends LitElement {
       case 'iframe': return html`<iframe src="${page.iframeUrl ?? ''}" style="width:100%;height:calc(100vh - 200px);border:1px solid var(--zs-border);border-radius:8px;" frameborder="0"></iframe>`;
       case 'chart': return this.renderChartPage(page);
       case 'tabs': return this.renderTabsPage(page);
+      case 'landing':
+        return html`<zs-landing-page .page="${page}" .landingConfig="${this.config!.landingConfig}" .provider="${this.provider}" .data="${this.pageData}"></zs-landing-page>`;
+      case 'blog-list':
+        return html`<zs-blog-list .config="${page.blogListConfig}" .posts="${(this.pageData[page.blogListConfig?.dataSourceId ?? ''] as unknown[]) ?? []}" .provider="${this.provider}"></zs-blog-list>`;
+      case 'blog-post':
+        return html`<zs-blog-post .post="${this.pageData[page.blogPostConfig?.dataSourceId ?? '']}" .config="${page.blogPostConfig}"></zs-blog-post>`;
       case 'empty':
         this.dispatchEvent(new CustomEvent('app-render-page', { detail: { page }, bubbles: true, composed: true }));
         return html`<slot name="${page.segment}"></slot>`;
@@ -772,6 +786,27 @@ export class ZenttoStudioApp extends LitElement {
         `)}
       </div>
       ${tabPage ? this.renderPageContent(tabPage) : html`<div>Tab page not found: ${tab?.pageId}</div>`}
+    `;
+  }
+
+  // ─── Landing Mode ─────────────────────────────────
+
+  private renderLandingMode(): TemplateResult {
+    const page = this.currentPage;
+    if (!page) return html`<div style="padding:48px;text-align:center;color:var(--zs-text-muted);">Page not found</div>`;
+
+    return html`
+      <zs-landing-page
+        .page="${page}"
+        .landingConfig="${this.config!.landingConfig}"
+        .provider="${this.provider}"
+        .data="${this.pageData}"
+        @landing-navigate="${(e: CustomEvent) => this.navigate(e.detail.segment)}"
+        @landing-seo="${(e: CustomEvent) => {
+          // Forward SEO event
+          this.dispatchEvent(new CustomEvent('app-seo', { detail: e.detail, bubbles: true, composed: true }));
+        }}"
+      ></zs-landing-page>
     `;
   }
 

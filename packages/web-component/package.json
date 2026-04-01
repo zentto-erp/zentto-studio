@@ -1,6 +1,6 @@
 {
   "name": "@zentto/studio",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "description": "Zentto Studio — runtime UI builder web components. Renders dynamic forms, dashboards, and wizards from JSON schemas.",
   "type": "module",
   "main": "dist/zentto-studio-renderer.js",
@@ -25,6 +25,14 @@
     "./page-designer": {
       "types": "./dist/designer/zs-page-designer.d.ts",
       "import": "./dist/designer/zs-page-designer.js"
+    },
+    "./landing": {
+      "types": "./dist/landing/index.d.ts",
+      "import": "./dist/landing/index.js"
+    },
+    "./landing-designer": {
+      "types": "./dist/designer/zs-landing-designer.d.ts",
+      "import": "./dist/designer/zs-landing-designer.js"
     }
   },
   "files": [

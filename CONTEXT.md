@@ -28,7 +28,11 @@ zentto-studio/                          ← D:\DatqBoxWorkspace\zentto-studio
 │   │       │   ├── schema-store.ts      localStorage + remote @zentto/cache sync
 │   │       │   └── flavor-manager.ts    Vistas por rol (SAP Personas)
 │   │       ├── registry/field-registry.ts  38 tipos de campo registrados
-│   │       ├── templates/app-templates.ts  Templates CRM, E-Commerce, HR
+│   │       ├── templates/
+│   │       │   ├── app-templates.ts      Templates CRM, E-Commerce, HR
+│   │       │   ├── landing-templates.ts  15 landing page templates (117 KB)
+│   │       │   └── theme-presets.ts      8 color scheme presets
+│   │       ├── utils/font-loader.ts     Google Fonts loader (loadGoogleFont, POPULAR_FONTS)
 │   │       ├── events/event-bus.ts      Pub/sub tipado
 │   │       └── i18n/                    es, en, pt
 │   │
@@ -67,7 +71,37 @@ zentto-studio/                          ← D:\DatqBoxWorkspace\zentto-studio
 │   │       │   │                             - Tab API: login, fetch fields, accesos rápidos Zentto
 │   │       │   │                             - 7 templates: blank, contacto, cliente, empleado, factura, producto, encuesta
 │   │       │   │                             - Vistas: Diseño, Preview live, JSON
+│   │       │   ├── zs-landing-designer.ts   Visual landing page editor con:
+│   │       │   │                             - Section drag-drop + reorder
+│   │       │   │                             - Property panel por sección
+│   │       │   │                             - Live preview
+│   │       │   │                             - Undo/redo
+│   │       │   │                             - Template selector (15 templates)
+│   │       │   │                             - Theme preset picker (8 presets)
 │   │       │   └── zs-app-wizard.ts         Wizard 5 pasos para crear AppConfig
+│   │       ├── landing/                     Landing page components (14 section types):
+│   │       │   ├── zs-landing-page.ts        Orquesta navbar + sections + footer
+│   │       │   ├── zs-landing-navbar.ts      Responsive navbar con links + CTA
+│   │       │   ├── zs-landing-footer.ts      Multi-column footer
+│   │       │   ├── zs-landing-styles.ts      CSS tokens --zl-*, reset, buttons
+│   │       │   ├── zs-section-hero.ts        Hero con headline, CTA, imagen
+│   │       │   ├── zs-section-features.ts    Feature cards grid
+│   │       │   ├── zs-section-pricing.ts     Tabla de precios
+│   │       │   ├── zs-section-testimonials.ts Testimonios grid/carousel
+│   │       │   ├── zs-section-cta.ts         Call-to-action banner
+│   │       │   ├── zs-section-stats.ts       Métricas / counters
+│   │       │   ├── zs-section-faq.ts         FAQ accordion
+│   │       │   ├── zs-section-team.ts        Team member cards
+│   │       │   ├── zs-section-gallery.ts     Image gallery grid
+│   │       │   ├── zs-section-logos.ts       Logo cloud
+│   │       │   ├── zs-section-content.ts     Rich text content
+│   │       │   ├── zs-section-video.ts       Embedded video
+│   │       │   ├── zs-section-contact.ts     Contact form
+│   │       │   └── zs-section-html.ts        Raw HTML
+│   │       ├── blog/                        Blog engine:
+│   │       │   ├── zs-blog-list.ts           Post list (grid/list/magazine layouts)
+│   │       │   ├── zs-blog-card.ts           Single post card
+│   │       │   └── zs-blog-post.ts           Full post view (Markdown parser, JSON-LD)
 │   │       └── styles/tokens.ts             Design tokens --zs-* (light + dark)
 │   │
 │   └── react/                          ← @zentto/studio-react
@@ -78,7 +112,7 @@ zentto-studio/                          ← D:\DatqBoxWorkspace\zentto-studio
 └── package.json                        Workspaces: packages/*
 ```
 
-## Versión actual: 0.6.0 en npm
+## Versión actual: 0.7.0 en npm
 
 ```bash
 npm install @zentto/studio-core@0.6.0 @zentto/studio@0.6.0 @zentto/studio-react@0.6.0
@@ -126,6 +160,9 @@ Páginas de demo:
 - `/studio` — App completa (dashboard cards, grids, forms, charts)
 - `/studio-wizard` — Wizard para crear apps
 - `/studio-designer` — Designer visual con modales/toasts/API
+- `/studio-landing` — Landing page preview (15 templates)
+- `/studio-landing-designer` — Landing page visual editor
+- `/studio-blog` — Blog engine demo
 
 ## Ecosistema relacionado
 
@@ -169,7 +206,22 @@ npm install @zentto/studio-core@X.Y.Z @zentto/studio@X.Y.Z @zentto/studio-react@
 rm -rf apps/lab/.next node_modules/.cache
 ```
 
-## Lo que falta (Fase 2)
+## Completado (Fases 1–6)
+
+- [x] **Landing page system** — `appMode: 'landing'` renderiza full-page sin sidebar/header
+- [x] **14 section types** — hero, features, pricing, testimonials, cta, stats, faq, team, gallery, logos, content, video, contact, html
+- [x] **15 landing templates** — saas-startup, saas-product, portfolio-minimal, portfolio-agency, restaurant-menu, event-conference, ecommerce-store, blog-standard, blog-magazine, consulting-firm, nonprofit-charity, fitness-gym, realestate-listing, education-course, app-download
+- [x] **Blog engine** — `<zs-blog-list>`, `<zs-blog-card>`, `<zs-blog-post>` con Markdown parser, 3 layouts
+- [x] **Landing designer** — `<zs-landing-designer>` visual editor con section drag-drop, property panel, live preview, undo/redo, template selector
+- [x] **8 theme presets** — indigo, emerald, rose, amber, ocean, slate, midnight, sunset
+- [x] **Dark mode** — via `theme="dark"` attribute
+- [x] **Google Fonts loader** — `loadGoogleFont()`, `loadGoogleFonts()`, `POPULAR_FONTS`
+- [x] **Scroll animations** — IntersectionObserver-based, staggered children
+- [x] **Lazy-load sections** — Below-fold sections render placeholder until scrolled
+- [x] **JSON-LD** — Auto-generation Article schema for blog posts
+- [x] **SEO** — `SeoConfig` + `updateSeo()` provider method + `landing-seo` event
+
+## Lo que falta (Fase siguiente)
 
 1. **Persistencia en @zentto/cache** — Templates y schemas del designer se guardan/leen de cache.zentto.net en vez de hardcoded
 2. **Drag-drop real con InteractJS** — Mover campos libremente en canvas (como report-designer)

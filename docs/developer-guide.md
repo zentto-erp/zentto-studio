@@ -185,9 +185,217 @@ All components emit `CustomEvent` with `bubbles: true, composed: true`.
 | `<zs-page-designer>` | `schema-change` | `{ schema }` |
 | `<zs-page-designer>` | `auto-save` | `{ schema }` |
 | `<zs-page-designer>` | `api-login` | `{ token, user, company, baseUrl }` |
+| `<zs-landing-designer>` | `designer-save` | `{ config }` |
+| `<zs-landing-designer>` | `designer-preview` | `{ config }` |
+| `<zs-landing-page>` | `landing-seo` | `{ ...SeoConfig }` |
 | `<zs-app-wizard>` | `wizard-complete` | `{ config }` |
 | `<zs-modal>` | `modal-confirm` | `{}` |
 | `<zs-toast>` | `toast-action` | `{ id, actionId }` |
+
+## Landing Page Architecture
+
+### App Mode
+
+Set `appMode: 'landing'` on `AppConfig` to render a full-page landing (no sidebar, no header):
+
+```typescript
+const config: AppConfig = {
+  id: 'my-site',
+  appMode: 'landing',           // 'app' | 'landing' | 'blog'
+  branding: { title: 'My SaaS' },
+  landing: { navbar: { ... }, footer: { ... }, seo: { ... } },
+  navigation: [],
+  pages: [{
+    id: 'home', segment: '', title: 'Home',
+    content: 'landing',
+    landingSections: [
+      { id: 's1', type: 'hero', config: { headline: 'Ship faster', ... } },
+      { id: 's2', type: 'features', config: { items: [...] } },
+    ],
+  }],
+};
+```
+
+### LandingConfig
+
+```typescript
+interface LandingConfig {
+  navbar?: LandingNavbar;       // top navigation bar
+  footer?: LandingFooter;      // multi-column footer
+  seo?: SeoConfig;             // global SEO defaults
+  globalStyles?: LandingStyles; // fonts, colors
+}
+```
+
+### Section Types Reference
+
+| Type | Config Interface | Key Properties |
+|------|-----------------|----------------|
+| `hero` | `HeroSectionConfig` | `headline`, `subtitle`, `ctaButtons`, `image`, `layout` |
+| `features` | `FeaturesSectionConfig` | `items[]` (icon, title, description), `columns` |
+| `pricing` | `PricingSectionConfig` | `tiers[]` (name, price, features, cta), `billingToggle` |
+| `testimonials` | `TestimonialsSectionConfig` | `items[]` (quote, author, avatar, role) |
+| `cta` | `CtaSectionConfig` | `headline`, `subtitle`, `buttons[]` |
+| `stats` | `StatsSectionConfig` | `items[]` (value, label, prefix, suffix) |
+| `faq` | `FaqSectionConfig` | `items[]` (question, answer) |
+| `team` | `TeamSectionConfig` | `members[]` (name, role, avatar, socials) |
+| `gallery` | `GallerySectionConfig` | `images[]` (src, alt, caption), `columns` |
+| `logos` | `LogosSectionConfig` | `items[]` (src, alt, url), `grayscale` |
+| `content` | `ContentSectionConfig` | `body` (Markdown/HTML), `image`, `layout` |
+| `video` | `VideoSectionConfig` | `url`, `poster`, `autoplay` |
+| `contact` | `ContactSectionConfig` | `fields[]`, `submitLabel`, `endpoint` |
+| `html` | — (raw HTML string) | `html` |
+
+Each section also accepts: `id`, `type`, `variant?`, `anchor?`, `background?`, `animation?`.
+
+### LandingSection
+
+```typescript
+interface LandingSection {
+  id: string;
+  type: LandingSectionType;
+  variant?: string;
+  anchor?: string;              // scroll anchor (e.g. '#features')
+  background?: SectionBackground; // color, gradient, image, overlay
+  animation?: { type: string; duration?: number; delay?: number; };
+  config: HeroSectionConfig | FeaturesSectionConfig | ...; // depends on type
+}
+```
+
+---
+
+## Blog System
+
+Blog pages use two content types: `blog-list` and `blog-post`.
+
+### BlogListConfig
+
+```typescript
+interface BlogListConfig {
+  dataSourceId: string;         // data source that returns posts array
+  layout?: 'grid' | 'list' | 'magazine';
+  columns?: 2 | 3;
+  showCategories?: boolean;
+  showSearch?: boolean;
+  pagination?: { pageSize: number; };
+}
+```
+
+### BlogPostConfig
+
+```typescript
+interface BlogPostConfig {
+  dataSourceId: string;
+  slugParam?: string;           // URL param for post slug (default: 'slug')
+  layout?: 'standard' | 'wide' | 'full';
+  showAuthor?: boolean;
+  showDate?: boolean;
+  showShareButtons?: boolean;
+  showRelatedPosts?: boolean;
+}
+```
+
+### Blog Components
+
+- `<zs-blog-list>` — Renders post list from data source, supports grid/list/magazine
+- `<zs-blog-card>` — Single post card with image, title, excerpt, meta
+- `<zs-blog-post>` — Full post view with built-in Markdown parser and auto JSON-LD
+
+---
+
+## Theme Presets API
+
+```typescript
+import { THEME_PRESETS, getThemePreset, applyThemePresetToConfig } from '@zentto/studio-core';
+
+// List all 8 presets
+THEME_PRESETS.forEach(p => console.log(p.id, p.name, p.primary));
+
+// Get one by ID
+const preset = getThemePreset('midnight');
+
+// Apply to an AppConfig (returns new config, does not mutate)
+const themed = applyThemePresetToConfig(config, preset);
+```
+
+### ThemePreset Interface
+
+```typescript
+interface ThemePreset {
+  id: string;
+  name: string;
+  primary: string;
+  primaryHover: string;
+  primaryLight: string;
+  accent: string;
+  bg: string;
+  bgAlt: string;
+  text: string;
+  textSecondary: string;
+  headingFontFamily?: string;
+  bodyFontFamily?: string;
+}
+```
+
+Available: `indigo`, `emerald`, `rose`, `amber`, `ocean`, `slate`, `midnight`, `sunset`.
+
+---
+
+## Google Fonts Loader API
+
+```typescript
+import { loadGoogleFont, loadGoogleFonts, POPULAR_FONTS } from '@zentto/studio-core';
+
+// Load a single font (appends <link> to <head>, idempotent)
+loadGoogleFont('Inter');
+loadGoogleFont('Playfair Display', [400, 700]); // specific weights
+
+// Load multiple fonts at once
+loadGoogleFonts(['Inter', 'Poppins', 'Merriweather']);
+
+// POPULAR_FONTS — curated list of 14 fonts
+// 'Inter', 'Poppins', 'Roboto', 'Open Sans', 'Montserrat', 'Lato',
+// 'Playfair Display', 'Merriweather', 'Source Sans 3', 'Raleway',
+// 'DM Sans', 'Space Grotesk', 'Plus Jakarta Sans', 'Outfit'
+```
+
+---
+
+## SEO Configuration
+
+### SeoConfig
+
+```typescript
+interface SeoConfig {
+  title?: string;
+  description?: string;
+  ogImage?: string;
+  ogType?: string;
+  twitterCard?: 'summary' | 'summary_large_image';
+  canonical?: string;
+  jsonLd?: Record<string, unknown>; // custom JSON-LD
+}
+```
+
+### Provider Integration
+
+The `StudioProvider` supports SEO updates:
+
+```typescript
+const provider: StudioProvider = {
+  updateSeo: (seo: SeoConfig) => {
+    document.title = seo.title || '';
+    // Update meta tags, etc.
+  },
+};
+```
+
+### Events
+
+- `landing-seo` — Fired by `<zs-landing-page>` with `{ detail: SeoConfig }` when the page determines its SEO metadata
+- Blog posts auto-generate `Article` JSON-LD schema
+
+---
 
 ## Theming
 

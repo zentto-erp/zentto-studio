@@ -94,6 +94,151 @@ The login session persists while the designer is open. All API calls include the
 
 Currently, designs are exported as JSON. Copy the JSON from the **JSON view** and save it in your project. In the next version, designs will be saved automatically to the cloud via `@zentto/cache`.
 
+## Landing Page Designer
+
+The **Landing Designer** (`<zs-landing-designer>`) lets you build landing pages visually.
+
+### Opening the Designer
+
+```html
+<script type="module">
+  import '@zentto/studio/landing';
+  import '@zentto/studio/landing-designer';
+</script>
+
+<zs-landing-designer></zs-landing-designer>
+```
+
+### How to Use
+
+1. **Pick a template** — Click "Templates" in the toolbar and choose from 15 pre-built designs (SaaS, Portfolio, E-Commerce, Blog, etc.)
+2. **Add sections** — Click "Add Section" to insert any of the 14 section types (Hero, Features, Pricing, Testimonials, FAQ, etc.)
+3. **Reorder sections** — Drag sections up/down in the sidebar
+4. **Edit properties** — Click any section to open the property panel. Edit text, images, colors, layout variant
+5. **Change theme** — Use the theme preset picker to switch between 8 color schemes (Indigo, Emerald, Rose, Midnight, etc.)
+6. **Preview** — Click "Preview" to see the live landing page
+7. **Save** — The `designer-save` event fires with the full `AppConfig` JSON
+
+### Keyboard Shortcuts
+
+| Key | Action |
+|-----|--------|
+| Ctrl+Z | Undo |
+| Ctrl+Shift+Z | Redo |
+| Ctrl+S | Save |
+
+---
+
+## Creating a Landing Page
+
+### Step 1: Pick a Template
+
+```ts
+import { getLandingTemplate, listLandingTemplates } from '@zentto/studio-core';
+
+// See all available templates
+const templates = listLandingTemplates();
+// → [{ id: 'saas-startup', name: 'SaaS Startup', category: 'saas', ... }, ...]
+
+// Get one
+const config = getLandingTemplate('saas-startup');
+```
+
+### Step 2: Customize
+
+Edit the config JSON to change text, images, colors, and sections. Or use the visual designer.
+
+### Step 3: Apply a Theme Preset
+
+```ts
+import { applyThemePresetToConfig, getThemePreset } from '@zentto/studio-core';
+
+const preset = getThemePreset('emerald');
+const themed = applyThemePresetToConfig(config, preset);
+```
+
+### Step 4: Render
+
+```html
+<zentto-studio-app id="app"></zentto-studio-app>
+<script>
+  document.getElementById('app').config = themed;
+</script>
+```
+
+---
+
+## Blog Setup
+
+### Adding a Blog Page
+
+Add a page with `content: 'blog-list'` to your AppConfig:
+
+```json
+{
+  "id": "blog",
+  "segment": "blog",
+  "title": "Blog",
+  "content": "blog-list",
+  "blogListConfig": {
+    "dataSourceId": "posts",
+    "layout": "grid",
+    "columns": 3,
+    "showCategories": true,
+    "showSearch": true
+  }
+}
+```
+
+### Blog Post Page
+
+Add a page with `content: 'blog-post'`:
+
+```json
+{
+  "id": "blog-post",
+  "segment": "blog/:slug",
+  "title": "Post",
+  "content": "blog-post",
+  "blogPostConfig": {
+    "dataSourceId": "posts",
+    "layout": "standard",
+    "showAuthor": true,
+    "showDate": true,
+    "showRelatedPosts": true
+  }
+}
+```
+
+Blog posts support Markdown content and auto-generate JSON-LD Article schema for SEO.
+
+### Blog Layouts
+
+- **grid** — Cards in a 2 or 3 column grid
+- **list** — Full-width horizontal cards
+- **magazine** — Featured post large, rest in grid
+
+---
+
+## Theme Presets
+
+Zentto Studio includes 8 theme presets you can apply to any landing page:
+
+| Preset | Primary Color | Style |
+|--------|--------------|-------|
+| **Indigo** | `#6366f1` | Modern SaaS default |
+| **Emerald** | `#10b981` | Fresh and natural |
+| **Rose** | `#f43f5e` | Bold and energetic |
+| **Amber** | `#f59e0b` | Warm and inviting |
+| **Ocean** | `#0ea5e9` | Clean and professional |
+| **Slate** | `#475569` | Minimal and elegant |
+| **Midnight** | `#818cf8` | Dark mode preset |
+| **Sunset** | `#fb923c` | Warm orange tones |
+
+Apply via the designer's theme picker or programmatically with `applyThemePresetToConfig()`.
+
+---
+
 ## Using in Your App
 
 Once you have a schema JSON, render it in your app:

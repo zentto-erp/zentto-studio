@@ -127,6 +127,15 @@ export type {
   TabsPageConfig, SplitPageConfig, ChartPageConfig,
   BrandingConfig, UserContext,
   AppConfig, NotificationConfig,
+  // Landing page types
+  LandingConfig, LandingNavbar, LandingNavLink, LandingFooter, FooterColumn, LandingStyles,
+  SeoConfig, LandingSectionType, LandingSection, SectionBackground,
+  HeroSectionConfig, FeaturesSectionConfig, PricingSectionConfig,
+  TestimonialsSectionConfig, CtaSectionConfig, StatsSectionConfig,
+  FaqSectionConfig, TeamSectionConfig, GallerySectionConfig,
+  LogosSectionConfig, ContentSectionConfig, VideoSectionConfig, ContactSectionConfig,
+  // Blog types
+  BlogListConfig, BlogPostConfig,
 } from './app-types.js';
 
 // App templates
@@ -135,6 +144,19 @@ export {
   APP_TEMPLATES, getAppTemplate, listAppTemplates,
 } from './templates/app-templates.js';
 export type { AppTemplateId } from './templates/app-templates.js';
+
+// Landing page templates
+export {
+  LANDING_TEMPLATES, getLandingTemplate, listLandingTemplates, listLandingTemplatesByCategory,
+} from './templates/landing-templates.js';
+export type { LandingTemplateMeta, LandingTemplateCategory } from './templates/landing-templates.js';
+
+// Theme presets
+export { THEME_PRESETS, getThemePreset, applyThemePresetToConfig } from './templates/theme-presets.js';
+export type { ThemePreset } from './templates/theme-presets.js';
+
+// Google Fonts loader
+export { loadGoogleFont, loadGoogleFonts, POPULAR_FONTS } from './utils/font-loader.js';
 
 // Code generation
 export {

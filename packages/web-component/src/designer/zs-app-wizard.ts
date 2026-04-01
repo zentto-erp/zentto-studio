@@ -8,6 +8,7 @@ import { studioTokens, fieldBaseStyles } from '../styles/tokens.js';
 import type { AppConfig, NavItem, PageConfig, BrandingConfig, CardItem } from '@zentto/studio-core';
 import type { DataSourceConfig, ThemeConfig } from '@zentto/studio-core';
 import { listAppTemplates, getAppTemplate } from '@zentto/studio-core';
+import { listLandingTemplates, getLandingTemplate } from '@zentto/studio-core';
 import { generateReactComponent, generateNextPage, generateAppPage } from '@zentto/studio-core';
 import type { AppTemplateId } from '@zentto/studio-core';
 
@@ -318,6 +319,9 @@ export class ZsAppWizard extends LitElement {
   @state() private showIconPicker = false;
   @state() private iconPickerTarget: 'nav' | 'branding' = 'nav';
 
+  // Landing template selection
+  @state() private _landingTemplateId = '';
+
   // Code export modal
   @state() private codeModalOpen = false;
   @state() private codeModalTitle = '';
@@ -334,13 +338,15 @@ export class ZsAppWizard extends LitElement {
   // ─── Navigation ───────────────────────────────────
 
   private canNext(): boolean {
-    if (this.currentStep === 0) return this.selectedTemplate != null || this.config != null;
+    if (this.currentStep === 0) return this.selectedTemplate != null || this._landingTemplateId !== '' || this.config != null;
     return this.config != null;
   }
 
   private next() {
     if (this.currentStep === 0 && !this.config && this.selectedTemplate) {
       this.config = getAppTemplate(this.selectedTemplate);
+    } else if (this.currentStep === 0 && !this.config && this._landingTemplateId) {
+      this.config = getLandingTemplate(this._landingTemplateId);
     }
     if (this.currentStep < STEPS.length - 1) this.currentStep++;
   }
@@ -418,12 +424,26 @@ export class ZsAppWizard extends LitElement {
 
   private renderTemplateStep() {
     const templates = listAppTemplates();
+    const landingTemplates = listLandingTemplates();
 
     return html`
+      <div style="font-size:13px;font-weight:600;color:var(--zs-text);margin-bottom:12px;">Aplicaciones</div>
       <div class="template-grid">
         ${templates.map(t => html`
           <div class="template-card ${this.selectedTemplate === t.id ? 'template-card--selected' : ''}"
-            @click="${() => { this.selectedTemplate = t.id as AppTemplateId; }}">
+            @click="${() => { this.selectedTemplate = t.id as AppTemplateId; this._landingTemplateId = ''; }}">
+            <div class="template-icon">${t.icon}</div>
+            <div class="template-title">${t.title}</div>
+            <div class="template-desc">${t.description}</div>
+          </div>
+        `)}
+      </div>
+
+      <div style="font-size:13px;font-weight:600;color:var(--zs-text);margin:24px 0 12px;">Landing Pages</div>
+      <div class="template-grid">
+        ${landingTemplates.map(t => html`
+          <div class="template-card ${this._landingTemplateId === t.id ? 'template-card--selected' : ''}"
+            @click="${() => { this._landingTemplateId = t.id; this.selectedTemplate = null; }}">
             <div class="template-icon">${t.icon}</div>
             <div class="template-title">${t.title}</div>
             <div class="template-desc">${t.description}</div>
