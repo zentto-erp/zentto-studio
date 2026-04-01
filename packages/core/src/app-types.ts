@@ -279,11 +279,17 @@ export interface NotificationConfig {
 
 // ─── Landing Page Config ──────────────────────────────────────────
 
+export type LandingLocale = 'es' | 'en' | 'pt' | 'fr' | 'de';
+
 export interface LandingConfig {
   navbar?: LandingNavbar;
   footer?: LandingFooter;
   seo?: SeoConfig;
   globalStyles?: LandingStyles;
+  /** Active locale for text rendering */
+  locale?: LandingLocale;
+  /** Translation dictionaries keyed by locale. Values are flat maps: "sectionId.field" → text */
+  i18n?: Record<string, Record<string, string>>;
 }
 
 export interface LandingNavbar {

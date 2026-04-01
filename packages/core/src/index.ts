@@ -136,6 +136,8 @@ export type {
   LogosSectionConfig, ContentSectionConfig, VideoSectionConfig, ContactSectionConfig,
   // Blog types
   BlogListConfig, BlogPostConfig,
+  // i18n
+  LandingLocale,
 } from './app-types.js';
 
 // App templates
@@ -154,6 +156,13 @@ export type { LandingTemplateMeta, LandingTemplateCategory } from './templates/l
 // Theme presets
 export { THEME_PRESETS, getThemePreset, applyThemePresetToConfig } from './templates/theme-presets.js';
 export type { ThemePreset } from './templates/theme-presets.js';
+
+// Landing i18n
+export {
+  translateLandingConfig,
+  getAvailableLandingLocales,
+  LANDING_UI_STRINGS,
+} from './i18n/landing-i18n.js';
 
 // Google Fonts loader
 export { loadGoogleFont, loadGoogleFonts, POPULAR_FONTS } from './utils/font-loader.js';

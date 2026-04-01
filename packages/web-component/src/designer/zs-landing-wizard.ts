@@ -5,9 +5,10 @@
 import { LitElement, html, css, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { studioTokens, fieldBaseStyles } from '../styles/tokens.js';
-import type { AppConfig, LandingSection, LandingSectionType } from '@zentto/studio-core';
+import type { AppConfig, LandingSection, LandingSectionType, LandingLocale } from '@zentto/studio-core';
 import { listLandingTemplates, getLandingTemplate, listLandingTemplatesByCategory } from '@zentto/studio-core';
 import { THEME_PRESETS, getThemePreset, applyThemePresetToConfig } from '@zentto/studio-core';
+import { translateLandingConfig, getAvailableLandingLocales } from '@zentto/studio-core';
 import type { LandingTemplateMeta, ThemePreset, LandingTemplateCategory } from '@zentto/studio-core';
 import '../landing/zs-landing-page.js';
 
@@ -472,6 +473,7 @@ export class ZsLandingWizard extends LitElement {
   @state() private _showSectionPalette = false;
   @state() private _templates: LandingTemplateMeta[] = [];
   @state() private _customColor = '';
+  @state() private _locale: LandingLocale = 'en';
 
   // ─── Lifecycle ────────────────────────────────────
 
@@ -761,7 +763,11 @@ export class ZsLandingWizard extends LitElement {
   private _selectTemplate(id: string) {
     this._selectedTemplateId = id;
     try {
-      const templateConfig = getLandingTemplate(id);
+      let templateConfig = getLandingTemplate(id);
+      // Apply locale translation if not EN
+      if (this._locale !== 'en') {
+        templateConfig = translateLandingConfig(templateConfig, this._locale);
+      }
       // Merge template into config, preserving user's branding edits if any
       this._config = {
         ...templateConfig,
@@ -850,7 +856,28 @@ export class ZsLandingWizard extends LitElement {
           @input=${(e: Event) => this._updateBranding('logo', (e.target as HTMLInputElement).value)}
         />
       </div>
+
+      <div class="form-group">
+        <label class="form-label">Idioma del sitio</label>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          ${getAvailableLandingLocales().map(loc => html`
+            <button
+              class="btn ${this._locale === loc.code ? 'btn--primary' : ''}"
+              style="min-width:120px; justify-content:center;"
+              @click=${() => this._changeLocale(loc.code as LandingLocale)}
+            >
+              ${loc.flag} ${loc.label}
+            </button>
+          `)}
+        </div>
+      </div>
     `;
+  }
+
+  private _changeLocale(locale: LandingLocale) {
+    this._locale = locale;
+    this._config = translateLandingConfig(this._config, locale);
+    this._emitChange();
   }
 
   private _updateBranding(key: keyof AppConfig['branding'], value: string) {
