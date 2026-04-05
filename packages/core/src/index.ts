@@ -178,6 +178,10 @@ export {
 } from './codegen/index.js';
 export type { CodegenOptions } from './codegen/index.js';
 
+// Social icons
+export { SOCIAL_ICONS, getSocialIcon, getSocialIconNames } from './icons/social-icons.js';
+export type { SocialIconData } from './icons/social-icons.js';
+
 // Provider system
 export type {
   IconResolver, ComponentResolver, PageRenderer,
@@ -185,3 +189,7 @@ export type {
   StudioProvider,
 } from './providers.js';
 export { DEFAULT_PROVIDER, mergeProviders, resolveIcon } from './providers.js';
+
+// Social sharing
+export { getShareUrl, getSupportedShareNetworks, canNativeShare, nativeShare } from './social/share.js';
+export type { ShareConfig } from './social/share.js';
