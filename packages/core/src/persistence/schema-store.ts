@@ -54,7 +54,7 @@ export interface RemoteStoreConfig {
   companyId: string;
   userId?: string;
   email?: string;
-  appKey?: string;          // X-App-Key header
+  appKey: string;           // X-App-Key header (obligatorio)
 }
 
 /** Save schema to remote cache */
@@ -65,7 +65,7 @@ export async function saveSchemaRemote(
 ): Promise<boolean> {
   try {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (config.appKey) headers['X-App-Key'] = config.appKey;
+    headers['x-app-key'] = config.appKey;
 
     const response = await fetch(`${config.baseUrl}/studio-schemas/${schemaId}`, {
       method: 'PUT',
@@ -93,7 +93,7 @@ export async function loadSchemaRemote(
     if (config.email) params.set('email', config.email);
 
     const headers: Record<string, string> = {};
-    if (config.appKey) headers['X-App-Key'] = config.appKey;
+    headers['x-app-key'] = config.appKey;
 
     const response = await fetch(
       `${config.baseUrl}/studio-schemas/${schemaId}?${params}`,
@@ -116,7 +116,7 @@ export async function listSchemasRemote(
     if (config.email) params.set('email', config.email);
 
     const headers: Record<string, string> = {};
-    if (config.appKey) headers['X-App-Key'] = config.appKey;
+    headers['x-app-key'] = config.appKey;
 
     const response = await fetch(
       `${config.baseUrl}/studio-schemas?${params}`,
