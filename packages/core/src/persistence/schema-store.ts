@@ -54,7 +54,18 @@ export interface RemoteStoreConfig {
   companyId: string;
   userId?: string;
   email?: string;
-  appKey: string;           // X-App-Key header (obligatorio)
+  appKey?: string;          // x-app-key (solo server-side; en browser usa cookie HttpOnly)
+}
+
+/**
+ * Headers de auth para zentto-cache.
+ * - Browser: cookie HttpOnly zentto_token viaja automáticamente
+ * - Server/MCP: appKey va en x-app-key header
+ */
+function cacheHeaders(config: RemoteStoreConfig): Record<string, string> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (config.appKey) headers['x-app-key'] = config.appKey;
+  return headers;
 }
 
 /** Save schema to remote cache */
@@ -64,12 +75,10 @@ export async function saveSchemaRemote(
   schema: StudioSchema,
 ): Promise<boolean> {
   try {
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    headers['x-app-key'] = config.appKey;
-
     const response = await fetch(`${config.baseUrl}/studio-schemas/${schemaId}`, {
       method: 'PUT',
-      headers,
+      headers: cacheHeaders(config),
+      credentials: 'include', // Cookie HttpOnly zentto_token
       body: JSON.stringify({
         companyId: config.companyId,
         userId: config.userId,
@@ -92,12 +101,9 @@ export async function loadSchemaRemote(
     if (config.userId) params.set('userId', config.userId);
     if (config.email) params.set('email', config.email);
 
-    const headers: Record<string, string> = {};
-    headers['x-app-key'] = config.appKey;
-
     const response = await fetch(
       `${config.baseUrl}/studio-schemas/${schemaId}?${params}`,
-      { headers },
+      { headers: cacheHeaders(config), credentials: 'include' },
     );
     if (!response.ok) return null;
 
@@ -115,12 +121,9 @@ export async function listSchemasRemote(
     if (config.userId) params.set('userId', config.userId);
     if (config.email) params.set('email', config.email);
 
-    const headers: Record<string, string> = {};
-    headers['x-app-key'] = config.appKey;
-
     const response = await fetch(
       `${config.baseUrl}/studio-schemas?${params}`,
-      { headers },
+      { headers: cacheHeaders(config), credentials: 'include' },
     );
     if (!response.ok) return [];
 
