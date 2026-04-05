@@ -39,6 +39,8 @@ const SECTION_PALETTE: SectionPaletteItem[] = [
   { type: 'video', icon: '🎬', name: 'Video', description: 'Embed de video' },
   { type: 'contact', icon: '📬', name: 'Contact', description: 'Formulario de contacto' },
   { type: 'html', icon: '🔧', name: 'HTML', description: 'Bloque HTML raw' },
+  { type: 'carousel', icon: '🎠', name: 'Carousel', description: 'Slider de imagenes y contenido' },
+  { type: 'cta-form', icon: '📋', name: 'CTA Form', description: 'Formulario de captura de leads' },
 ];
 
 const SECTION_ICONS: Record<string, string> = {};
@@ -394,6 +396,10 @@ function getConfigKey(type: LandingSectionType): string {
     faq: 'faqConfig', team: 'teamConfig', gallery: 'galleryConfig',
     logos: 'logosConfig', content: 'contentConfig', video: 'videoConfig',
     contact: 'contactConfig', html: 'htmlContent', 'social-links': 'socialLinksConfig',
+    map: 'mapConfig', countdown: 'countdownConfig',
+    carousel: 'carouselConfig', 'cta-form': 'ctaFormConfig',
+    comparison: 'comparisonConfig', timeline: 'timelineConfig',
+    tabs: 'tabsConfig', 'social-proof': 'socialProofConfig',
   };
   return map[type];
 }

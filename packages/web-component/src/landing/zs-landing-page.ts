@@ -28,6 +28,14 @@ import './zs-section-video.js';
 import './zs-section-contact.js';
 import './zs-section-html.js';
 import './zs-section-social-links.js';
+import './zs-section-map.js';
+import './zs-section-countdown.js';
+import './zs-section-carousel.js';
+import './zs-section-cta-form.js';
+import './zs-section-comparison.js';
+import './zs-section-timeline.js';
+import './zs-section-tabs.js';
+import './zs-section-social-proof.js';
 
 @customElement('zs-landing-page')
 export class ZsLandingPage extends LitElement {
@@ -246,6 +254,46 @@ export class ZsLandingPage extends LitElement {
           return html`<zs-section-social-links
             .config="${section.socialLinksConfig!}"
           ></zs-section-social-links>`;
+
+        case 'map':
+          return html`<zs-section-map
+            .config="${section.mapConfig!}"
+          ></zs-section-map>`;
+
+        case 'countdown':
+          return html`<zs-section-countdown
+            .config="${section.countdownConfig!}"
+          ></zs-section-countdown>`;
+
+        case 'carousel':
+          return html`<zs-section-carousel
+            .config="${section.carouselConfig!}"
+          ></zs-section-carousel>`;
+
+        case 'cta-form':
+          return html`<zs-section-cta-form
+            .config="${section.ctaFormConfig!}"
+          ></zs-section-cta-form>`;
+
+        case 'comparison':
+          return html`<zs-section-comparison
+            .config="${section.comparisonConfig!}"
+          ></zs-section-comparison>`;
+
+        case 'timeline':
+          return html`<zs-section-timeline
+            .config="${section.timelineConfig!}"
+          ></zs-section-timeline>`;
+
+        case 'tabs':
+          return html`<zs-section-tabs
+            .config="${section.tabsSectionConfig!}"
+          ></zs-section-tabs>`;
+
+        case 'social-proof':
+          return html`<zs-section-social-proof
+            .config="${section.socialProofConfig!}"
+          ></zs-section-social-proof>`;
 
         default:
           return nothing;

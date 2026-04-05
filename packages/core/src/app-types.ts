@@ -354,7 +354,15 @@ export type LandingSectionType =
   | 'video'
   | 'contact'
   | 'html'
-  | 'social-links';
+  | 'social-links'
+  | 'map'
+  | 'countdown'
+  | 'carousel'
+  | 'cta-form'
+  | 'comparison'
+  | 'timeline'
+  | 'tabs'
+  | 'social-proof';
 
 export interface LandingSection {
   id: string;
@@ -381,6 +389,14 @@ export interface LandingSection {
   contactConfig?: ContactSectionConfig;
   htmlContent?: string;        // for type='html'
   socialLinksConfig?: SocialLinksSectionConfig;
+  mapConfig?: MapSectionConfig;
+  countdownConfig?: CountdownSectionConfig;
+  carouselConfig?: CarouselSectionConfig;
+  ctaFormConfig?: CtaFormSectionConfig;
+  comparisonConfig?: ComparisonSectionConfig;
+  timelineConfig?: TimelineSectionConfig;
+  tabsSectionConfig?: TabsSectionConfig;
+  socialProofConfig?: SocialProofSectionConfig;
 }
 
 export interface SectionBackground {
@@ -526,6 +542,77 @@ export interface SocialLinksSectionConfig {
   iconSize?: number;             // default 32
   colorMode?: 'brand' | 'mono' | 'custom';
   customColor?: string;
+}
+
+export interface MapSectionConfig {
+  headline?: string;
+  address?: string;
+  lat?: number;
+  lng?: number;
+  zoom?: number;
+  height?: string;
+  showInfo?: boolean;
+  phone?: string;
+  email?: string;
+  hours?: string;
+}
+
+export interface CountdownSectionConfig {
+  headline?: string;
+  subtitle?: string;
+  targetDate: string;            // ISO date string
+  expiredMessage?: string;
+  variant?: 'boxes' | 'inline' | 'minimal';
+  showDays?: boolean;
+  showHours?: boolean;
+  showMinutes?: boolean;
+  showSeconds?: boolean;
+}
+
+export interface CarouselSectionConfig {
+  items: { image?: string; title?: string; description?: string; cta?: { label: string; href: string } }[];
+  autoPlay?: boolean;
+  interval?: number;             // ms, default 5000
+  showDots?: boolean;
+  showArrows?: boolean;
+  height?: string;               // default '60vh'
+}
+
+export interface CtaFormSectionConfig {
+  headline: string;
+  description?: string;
+  fields: { name: string; type: 'text' | 'email' | 'tel' | 'textarea'; placeholder?: string; required?: boolean }[];
+  buttonLabel?: string;
+  successMessage?: string;
+  variant?: 'horizontal' | 'stacked';
+}
+
+export interface ComparisonSectionConfig {
+  headline?: string;
+  subtitle?: string;
+  columns: { name: string; highlighted?: boolean }[];
+  rows: { feature: string; values: string[] }[];
+}
+
+export interface TimelineSectionConfig {
+  headline?: string;
+  subtitle?: string;
+  items: { date?: string; title: string; description?: string; icon?: string }[];
+  variant?: 'alternating' | 'left' | 'right';
+}
+
+export interface TabsSectionConfig {
+  headline?: string;
+  tabs: { label: string; icon?: string; content: string }[]; // content is HTML
+  variant?: 'top' | 'pills' | 'underline';
+}
+
+export interface SocialProofSectionConfig {
+  headline?: string;
+  subtitle?: string;
+  items: { source: string; author: string; rating: number; text: string; avatar?: string; date?: string }[];
+  variant?: 'grid' | 'carousel' | 'masonry';
+  showRating?: boolean;
 }
 
 // ─── Blog Config ──────────────────────────────────────────────────

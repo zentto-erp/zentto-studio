@@ -18,6 +18,14 @@ export { ZsSectionVideo } from './zs-section-video.js';
 export { ZsSectionContact } from './zs-section-contact.js';
 export { ZsSectionHtml } from './zs-section-html.js';
 export { ZsSectionSocialLinks } from './zs-section-social-links.js';
+export { ZsSectionMap } from './zs-section-map.js';
+export { ZsSectionCountdown } from './zs-section-countdown.js';
+export { ZsSectionCarousel } from './zs-section-carousel.js';
+export { ZsSectionCtaForm } from './zs-section-cta-form.js';
+export { ZsSectionComparison } from './zs-section-comparison.js';
+export { ZsSectionTimeline } from './zs-section-timeline.js';
+export { ZsSectionTabs } from './zs-section-tabs.js';
+export { ZsSectionSocialProof } from './zs-section-social-proof.js';
 export {
   landingTokens,
   landingResetStyles,

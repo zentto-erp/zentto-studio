@@ -134,6 +134,8 @@ export type {
   TestimonialsSectionConfig, CtaSectionConfig, StatsSectionConfig,
   FaqSectionConfig, TeamSectionConfig, GallerySectionConfig,
   LogosSectionConfig, ContentSectionConfig, VideoSectionConfig, ContactSectionConfig, SocialLinksSectionConfig,
+  MapSectionConfig, CountdownSectionConfig, CarouselSectionConfig, CtaFormSectionConfig,
+  ComparisonSectionConfig, TimelineSectionConfig, TabsSectionConfig, SocialProofSectionConfig,
   // Blog types
   BlogListConfig, BlogPostConfig,
   // i18n
