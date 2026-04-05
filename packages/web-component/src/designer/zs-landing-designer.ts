@@ -393,7 +393,7 @@ function getConfigKey(type: LandingSectionType): string {
     testimonials: 'testimonialsConfig', cta: 'ctaConfig', stats: 'statsConfig',
     faq: 'faqConfig', team: 'teamConfig', gallery: 'galleryConfig',
     logos: 'logosConfig', content: 'contentConfig', video: 'videoConfig',
-    contact: 'contactConfig', html: 'htmlContent',
+    contact: 'contactConfig', html: 'htmlContent', 'social-links': 'socialLinksConfig',
   };
   return map[type];
 }

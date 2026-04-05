@@ -27,6 +27,7 @@ import './zs-section-content.js';
 import './zs-section-video.js';
 import './zs-section-contact.js';
 import './zs-section-html.js';
+import './zs-section-social-links.js';
 
 @customElement('zs-landing-page')
 export class ZsLandingPage extends LitElement {
@@ -240,6 +241,11 @@ export class ZsLandingPage extends LitElement {
           return html`<zs-section-html
             .content="${section.htmlContent ?? ''}"
           ></zs-section-html>`;
+
+        case 'social-links':
+          return html`<zs-section-social-links
+            .config="${section.socialLinksConfig!}"
+          ></zs-section-social-links>`;
 
         default:
           return nothing;

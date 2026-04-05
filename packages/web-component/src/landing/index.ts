@@ -17,6 +17,7 @@ export { ZsSectionContent } from './zs-section-content.js';
 export { ZsSectionVideo } from './zs-section-video.js';
 export { ZsSectionContact } from './zs-section-contact.js';
 export { ZsSectionHtml } from './zs-section-html.js';
+export { ZsSectionSocialLinks } from './zs-section-social-links.js';
 export {
   landingTokens,
   landingResetStyles,

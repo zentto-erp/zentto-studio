@@ -133,7 +133,7 @@ export type {
   HeroSectionConfig, FeaturesSectionConfig, PricingSectionConfig,
   TestimonialsSectionConfig, CtaSectionConfig, StatsSectionConfig,
   FaqSectionConfig, TeamSectionConfig, GallerySectionConfig,
-  LogosSectionConfig, ContentSectionConfig, VideoSectionConfig, ContactSectionConfig,
+  LogosSectionConfig, ContentSectionConfig, VideoSectionConfig, ContactSectionConfig, SocialLinksSectionConfig,
   // Blog types
   BlogListConfig, BlogPostConfig,
   // i18n

@@ -353,7 +353,8 @@ export type LandingSectionType =
   | 'content'
   | 'video'
   | 'contact'
-  | 'html';
+  | 'html'
+  | 'social-links';
 
 export interface LandingSection {
   id: string;
@@ -379,6 +380,7 @@ export interface LandingSection {
   videoConfig?: VideoSectionConfig;
   contactConfig?: ContactSectionConfig;
   htmlContent?: string;        // for type='html'
+  socialLinksConfig?: SocialLinksSectionConfig;
 }
 
 export interface SectionBackground {
@@ -514,6 +516,16 @@ export interface ContactSectionConfig {
   schema?: StudioSchema;       // reuses the existing form system
   successMessage?: string;
   submitAction?: ActionConfig;
+}
+
+export interface SocialLinksSectionConfig {
+  headline?: string;
+  subtitle?: string;
+  links: { network: string; url: string; label?: string }[];
+  variant?: 'horizontal' | 'vertical' | 'grid';
+  iconSize?: number;             // default 32
+  colorMode?: 'brand' | 'mono' | 'custom';
+  customColor?: string;
 }
 
 // ─── Blog Config ──────────────────────────────────────────────────
