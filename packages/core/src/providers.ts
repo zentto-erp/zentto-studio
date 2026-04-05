@@ -168,7 +168,7 @@ export function mergeProviders(...providers: (StudioProvider | undefined)[]): St
 
 // ─── Icon resolution with fallback chain ──────────────────────────
 
-import { MATERIAL_ICONS } from './icons';
+import { MATERIAL_ICONS } from './icons/index.js';
 
 /** Emoji fallback map for environments that cannot render SVG */
 const EMOJI_FALLBACK: Record<string, string> = {
