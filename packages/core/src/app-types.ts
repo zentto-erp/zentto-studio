@@ -362,7 +362,11 @@ export type LandingSectionType =
   | 'comparison'
   | 'timeline'
   | 'tabs'
-  | 'social-proof';
+  | 'social-proof'
+  | 'before-after'
+  | 'popup'
+  | 'blog-preview'
+  | 'social-feed';
 
 export interface LandingSection {
   id: string;
@@ -397,6 +401,10 @@ export interface LandingSection {
   timelineConfig?: TimelineSectionConfig;
   tabsSectionConfig?: TabsSectionConfig;
   socialProofConfig?: SocialProofSectionConfig;
+  beforeAfterConfig?: BeforeAfterSectionConfig;
+  popupConfig?: PopupSectionConfig;
+  blogPreviewConfig?: BlogPreviewSectionConfig;
+  socialFeedConfig?: SocialFeedSectionConfig;
 }
 
 export interface SectionBackground {
@@ -613,6 +621,49 @@ export interface SocialProofSectionConfig {
   items: { source: string; author: string; rating: number; text: string; avatar?: string; date?: string }[];
   variant?: 'grid' | 'carousel' | 'masonry';
   showRating?: boolean;
+}
+
+export interface BeforeAfterSectionConfig {
+  headline?: string;
+  subtitle?: string;
+  beforeImage: string;
+  afterImage: string;
+  beforeLabel?: string;
+  afterLabel?: string;
+  initialPosition?: number; // 0-100, default 50
+}
+
+export interface PopupSectionConfig {
+  trigger: 'button' | 'scroll' | 'time' | 'exit-intent';
+  delay?: number; // ms for 'time' trigger
+  scrollPercent?: number; // for 'scroll' trigger
+  buttonLabel?: string;
+  content: string; // HTML content
+  headline?: string;
+  variant?: 'centered' | 'slide-in' | 'fullscreen';
+  showOnce?: boolean; // use localStorage to not show again
+  storageKey?: string;
+}
+
+export interface BlogPreviewSectionConfig {
+  headline?: string;
+  subtitle?: string;
+  posts: { title: string; excerpt?: string; image?: string; date?: string; author?: string; url?: string; category?: string }[];
+  columns?: 2 | 3 | 4;
+  variant?: 'cards' | 'list' | 'minimal';
+  showDate?: boolean;
+  showAuthor?: boolean;
+  showCategory?: boolean;
+  ctaLabel?: string;
+  ctaUrl?: string;
+}
+
+export interface SocialFeedSectionConfig {
+  headline?: string;
+  subtitle?: string;
+  posts: { network: string; url?: string; content?: string; image?: string; author?: string; date?: string }[];
+  columns?: 2 | 3 | 4;
+  variant?: 'grid' | 'masonry';
 }
 
 // ─── Blog Config ──────────────────────────────────────────────────

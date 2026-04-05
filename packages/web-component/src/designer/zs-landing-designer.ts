@@ -41,6 +41,10 @@ const SECTION_PALETTE: SectionPaletteItem[] = [
   { type: 'html', icon: '🔧', name: 'HTML', description: 'Bloque HTML raw' },
   { type: 'carousel', icon: '🎠', name: 'Carousel', description: 'Slider de imagenes y contenido' },
   { type: 'cta-form', icon: '📋', name: 'CTA Form', description: 'Formulario de captura de leads' },
+  { type: 'before-after', icon: '🔀', name: 'Before/After', description: 'Comparacion de imagenes con slider' },
+  { type: 'popup', icon: '🪟', name: 'Popup', description: 'Modal emergente con triggers configurables' },
+  { type: 'blog-preview', icon: '📰', name: 'Blog Preview', description: 'Vista previa de entradas del blog' },
+  { type: 'social-feed', icon: '📱', name: 'Social Feed', description: 'Feed de publicaciones de redes sociales' },
 ];
 
 const SECTION_ICONS: Record<string, string> = {};
@@ -400,6 +404,8 @@ function getConfigKey(type: LandingSectionType): string {
     carousel: 'carouselConfig', 'cta-form': 'ctaFormConfig',
     comparison: 'comparisonConfig', timeline: 'timelineConfig',
     tabs: 'tabsConfig', 'social-proof': 'socialProofConfig',
+    'before-after': 'beforeAfterConfig', popup: 'popupConfig',
+    'blog-preview': 'blogPreviewConfig', 'social-feed': 'socialFeedConfig',
   };
   return map[type];
 }

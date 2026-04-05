@@ -136,6 +136,8 @@ export type {
   LogosSectionConfig, ContentSectionConfig, VideoSectionConfig, ContactSectionConfig, SocialLinksSectionConfig,
   MapSectionConfig, CountdownSectionConfig, CarouselSectionConfig, CtaFormSectionConfig,
   ComparisonSectionConfig, TimelineSectionConfig, TabsSectionConfig, SocialProofSectionConfig,
+  BeforeAfterSectionConfig, PopupSectionConfig,
+  BlogPreviewSectionConfig, SocialFeedSectionConfig,
   // Blog types
   BlogListConfig, BlogPostConfig,
   // i18n
@@ -195,3 +197,11 @@ export { DEFAULT_PROVIDER, mergeProviders, resolveIcon } from './providers.js';
 // Social sharing
 export { getShareUrl, getSupportedShareNetworks, canNativeShare, nativeShare } from './social/share.js';
 export type { ShareConfig } from './social/share.js';
+
+// Static site builder
+export { buildStaticSite } from './builder/static-builder.js';
+export type { StaticSiteOutput, BuildOptions } from './builder/static-builder.js';
+
+// SEO
+export { generateSitemap, generateRobotsTxt, generateJsonLd, generateOpenGraphTags, generateTwitterCardTags, generateCanonicalUrl, generateHreflangTags, generateMetaTagsHtml } from './seo/seo-generator.js';
+export { generateCSP, generateSecurityHeaders } from './seo/csp-generator.js';

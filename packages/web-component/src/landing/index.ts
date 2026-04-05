@@ -26,6 +26,10 @@ export { ZsSectionComparison } from './zs-section-comparison.js';
 export { ZsSectionTimeline } from './zs-section-timeline.js';
 export { ZsSectionTabs } from './zs-section-tabs.js';
 export { ZsSectionSocialProof } from './zs-section-social-proof.js';
+export { ZsSectionBeforeAfter } from './zs-section-before-after.js';
+export { ZsSectionPopup } from './zs-section-popup.js';
+export { ZsSectionBlogPreview } from './zs-section-blog-preview.js';
+export { ZsSectionSocialFeed } from './zs-section-social-feed.js';
 export {
   landingTokens,
   landingResetStyles,

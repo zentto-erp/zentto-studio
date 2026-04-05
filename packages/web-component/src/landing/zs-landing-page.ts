@@ -36,6 +36,10 @@ import './zs-section-comparison.js';
 import './zs-section-timeline.js';
 import './zs-section-tabs.js';
 import './zs-section-social-proof.js';
+import './zs-section-before-after.js';
+import './zs-section-popup.js';
+import './zs-section-blog-preview.js';
+import './zs-section-social-feed.js';
 
 @customElement('zs-landing-page')
 export class ZsLandingPage extends LitElement {
@@ -294,6 +298,26 @@ export class ZsLandingPage extends LitElement {
           return html`<zs-section-social-proof
             .config="${section.socialProofConfig!}"
           ></zs-section-social-proof>`;
+
+        case 'before-after':
+          return html`<zs-section-before-after
+            .config="${section.beforeAfterConfig!}"
+          ></zs-section-before-after>`;
+
+        case 'popup':
+          return html`<zs-section-popup
+            .config="${section.popupConfig!}"
+          ></zs-section-popup>`;
+
+        case 'blog-preview':
+          return html`<zs-section-blog-preview
+            .config="${section.blogPreviewConfig!}"
+          ></zs-section-blog-preview>`;
+
+        case 'social-feed':
+          return html`<zs-section-social-feed
+            .config="${section.socialFeedConfig!}"
+          ></zs-section-social-feed>`;
 
         default:
           return nothing;
