@@ -1,11 +1,32 @@
-# Zentto Studio
+<p align="center">
+  <img src="https://zentto.net/favicon.svg" width="64" alt="Zentto Logo" />
+</p>
 
-[![npm](https://img.shields.io/npm/v/@zentto/studio-core?label=core&color=e67e22)](https://www.npmjs.com/package/@zentto/studio-core)
-[![npm](https://img.shields.io/npm/v/@zentto/studio?label=studio&color=1976d2)](https://www.npmjs.com/package/@zentto/studio)
-[![npm](https://img.shields.io/npm/v/@zentto/studio-react?label=react&color=61dafb)](https://www.npmjs.com/package/@zentto/studio-react)
-[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+<h1 align="center">Zentto Studio</h1>
 
-**Runtime UI builder as a web component.** Generate full applications from JSON — forms, grids, charts, dashboards, wizards — rendered dynamically inside any web app.
+<p align="center">
+  <strong>Runtime UI builder as a web component — generate full apps from JSON.</strong>
+</p>
+
+<p align="center">
+  <a href="https://www.npmjs.com/package/@zentto/studio-core"><img src="https://img.shields.io/npm/v/@zentto/studio-core?label=studio-core&color=e67e22" alt="studio-core" /></a>
+  <a href="https://www.npmjs.com/package/@zentto/studio"><img src="https://img.shields.io/npm/v/@zentto/studio?label=studio&color=1976d2" alt="studio" /></a>
+  <a href="https://www.npmjs.com/package/@zentto/studio-react"><img src="https://img.shields.io/npm/v/@zentto/studio-react?label=studio-react&color=61dafb" alt="studio-react" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="License MIT" /></a>
+  <img src="https://img.shields.io/badge/framework-agnostic-blueviolet" alt="Framework agnostic" />
+</p>
+
+<p align="center">
+  <a href="#features">Features</a> ·
+  <a href="#quick-start">Quick Start</a> ·
+  <a href="#documentation">Docs</a> ·
+  <a href="#related-packages">Ecosystem</a> ·
+  <a href="#development">Development</a>
+</p>
+
+---
+
+Generate full applications from JSON — forms, grids, charts, dashboards, wizards — rendered dynamically inside any web app.
 
 Think MUI Toolpad + SAP Screen Personas + Retool, but as a **framework-agnostic web component** you install from npm.
 
@@ -249,11 +270,17 @@ See the [`examples/`](examples/) directory for integration guides:
 
 ## Related Packages
 
+Zentto Studio is part of the broader **Zentto** ecosystem:
+
 | Package | Description |
 |---------|-------------|
 | [`@zentto/datagrid`](https://github.com/zentto-erp/zentto-datagrid) | High-performance data grid web component (90+ features) |
 | [`@zentto/report-core`](https://github.com/zentto-erp/zentto-report) | Report engine — Crystal Reports alternative |
 | [`@zentto/cache`](https://github.com/zentto-erp/zentto-cache) | Redis caching microservice for layouts and templates |
+| [`zentto-landing-designer`](https://github.com/zentto-erp/zentto-landing-designer) | Visual builder for landing pages and blogs (built on Studio) |
+| [`zentto-sites`](https://github.com/zentto-erp/zentto-sites) | API to publish and manage static sites |
+| [`zentto-web`](https://github.com/zentto-erp/zentto-web) | Zentto ERP core platform |
+| [`zentto-erp-docs`](https://github.com/zentto-erp/zentto-erp-docs) | Official documentation |
 
 ---
 
@@ -273,6 +300,19 @@ npx turbo test
 npx turbo dev
 ```
 
+### Contributing
+
+- Branch from `developer`, PR to `developer`, final merge to `main`.
+- No co-authors in commit messages.
+- Never use `<table>` HTML — always use `@zentto/datagrid`.
+- Keep packages framework-agnostic whenever possible.
+
 ## License
 
 MIT
+
+---
+
+<p align="center">
+  Made with care by the <a href="https://zentto.net">Zentto</a> team
+</p>
